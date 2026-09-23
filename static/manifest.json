@@ -1,0 +1,45 @@
+{
+  "name": "Herpass — Girls Hostel Outing Management System",
+  "short_name": "Herpass",
+  "description": "Real-time safety, gate verification & outing management system for girls hostels.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "safety", "management"],
+  "shortcuts": [
+    {
+      "name": "Guard Gate Desk",
+      "short_name": "Gate Desk",
+      "url": "/?tab=guard-gate",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Student Profiles",
+      "short_name": "Students",
+      "url": "/?tab=students",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

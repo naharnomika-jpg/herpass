@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Herpass Brand Palette — mirrors the web app's Tailwind dark theme -->
+    <color name="bg_dark">#0f172a</color>
+    <color name="bg_card">#1e293b</color>
+    <color name="bg_surface">#0f172a</color>
+    <color name="brand_pink">#ec4899</color>
+    <color name="brand_rose">#f43f5e</color>
+    <color name="brand_amber">#f59e0b</color>
+    <color name="brand_emerald">#10b981</color>
+    <color name="text_primary">#f1f5f9</color>
+    <color name="text_secondary">#94a3b8</color>
+    <color name="border_subtle">#1e293b</color>
+</resources>

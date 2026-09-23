@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Herpass Android App — Main Activity Layout
+    Structure:
+      FrameLayout (root, fills screen)
+        ├── SwipeRefreshLayout → WebView   (actual app content)
+        ├── loadingOverlay                 (splash shown while page loads)
+        └── errorView                      (shown when server cannot be reached)
+-->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark">
+
+    <!-- ── Web Content ─────────────────────────────────────────────── -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bg_dark" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- ── Loading / Splash Overlay ───────────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@color/bg_dark"
+        android:padding="32dp">
+
+        <!-- Pink shield icon placeholder -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_launcher_foreground"
+            android:background="@drawable/ic_launcher_background"
+            android:padding="16dp" />
+
+        <!-- Brand name -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="HERPASS"
+            android:textSize="34sp"
+            android:textColor="@color/brand_pink"
+            android:textStyle="bold"
+            android:letterSpacing="0.15"
+            android:layout_marginTop="20dp" />
+
+        <!-- Tagline -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hostel Outing Safety System"
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="6dp" />
+
+        <!-- Pink loading spinner -->
+        <ProgressBar
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="40dp"
+            android:indeterminateTint="@color/brand_pink" />
+
+        <!-- Connecting hint -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connecting to server…"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="12dp" />
+
+    </LinearLayout>
+
+    <!-- ── Error / No-Connection View ─────────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/errorView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@color/bg_dark"
+        android:padding="40dp"
+        android:visibility="gone">
+
+        <!-- Warning icon (emoji) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠️"
+            android:textSize="52sp" />
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cannot Reach Server"
+            android:textSize="20sp"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <!-- Body copy -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Make sure the Herpass FastAPI server is running on your PC:\n\n• Start it with:\n  uvicorn server:app --reload --host 0.0.0.0\n\n• Emulator connects via:\n  http://10.0.2.2:8000\n\n• Physical device: use your PC&#8217;s LAN IP instead."
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:gravity="start"
+            android:lineSpacingMultiplier="1.4"
+            android:layout_marginTop="12dp" />
+
+        <!-- Retry Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/retryButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Retry Connection"
+            android:textColor="@color/text_primary"
+            android:backgroundTint="@color/brand_pink"
+            android:layout_marginTop="28dp"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            app:cornerRadius="12dp"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    </LinearLayout>
+
+</FrameLayout>

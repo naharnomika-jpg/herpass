@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Main Herpass app theme — dark slate, no action bar -->
+    <style name="Theme.Herpass" parent="Theme.AppCompat.NoActionBar">
+        <!-- Status bar & navigation bar colors to match the dark web UI -->
+        <item name="android:statusBarColor">@color/bg_dark</item>
+        <item name="android:navigationBarColor">@color/bg_dark</item>
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <!-- Light icons = false → use white icons on dark status bar -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <!-- Smooth content transitions -->
+        <item name="android:windowContentTransitions">true</item>
+    </style>
+</resources>
