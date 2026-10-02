@@ -3,11 +3,12 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, RefreshControl, Alert, ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { getDashboardStats, getOutings, markOut, markReturned } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme';
+import { colors, gradients, radius } from '../theme';
 import { POLL_INTERVAL } from '../config';
 import StatCard from '../components/StatCard';
 import OutingCard from '../components/OutingCard';
@@ -38,7 +39,6 @@ export default function DashboardScreen({ navigation }) {
     }
   }, []);
 
-  // Auto-poll for realtime updates
   useFocusEffect(
     useCallback(() => {
       load();
@@ -47,7 +47,6 @@ export default function DashboardScreen({ navigation }) {
     }, [load])
   );
 
-  // Filter logic
   useEffect(() => {
     const q = search.toLowerCase();
     setFiltered(
@@ -86,7 +85,10 @@ export default function DashboardScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.pink} size="large" />
+        <LinearGradient colors={gradients.primary} style={styles.loadingIcon}>
+          <Ionicons name="grid" size={22} color="#fff" />
+        </LinearGradient>
+        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 12 }} />
         <Text style={styles.loadingText}>Loading dashboard...</Text>
       </View>
     );
@@ -98,48 +100,72 @@ export default function DashboardScreen({ navigation }) {
         data={filtered}
         keyExtractor={item => item.outing_id}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.pink} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />
         }
         ListHeaderComponent={() => (
           <View>
-            {/* Page Title */}
-            <View style={styles.titleRow}>
-              <View>
-                <Text style={styles.title}>Outing Overview</Text>
+            {/* Page Header */}
+            <View style={styles.pageHeader}>
+              <View style={styles.pageHeaderLeft}>
+                <View style={styles.pageTitleRow}>
+                  <LinearGradient colors={gradients.primary} style={styles.titleIcon}>
+                    <Ionicons name="grid" size={14} color="#fff" />
+                  </LinearGradient>
+                  <Text style={styles.title}>Outing Overview</Text>
+                </View>
                 <View style={styles.liveRow}>
                   <View style={styles.liveDot} />
-                  <Text style={styles.liveTxt}>Live · auto-refreshes every 10s</Text>
+                  <Text style={styles.liveTxt}>Live · auto-refreshes</Text>
                 </View>
               </View>
               <TouchableOpacity
-                style={styles.createBtn}
+                style={styles.createBtnWrap}
                 onPress={() => navigation.navigate('CreateOuting')}
+                activeOpacity={0.85}
               >
-                <Ionicons name="add-circle" size={18} color="#fff" />
-                <Text style={styles.createBtnText}>New Outing</Text>
+                <LinearGradient colors={gradients.primary} style={styles.createBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="add" size={16} color="#fff" />
+                  <Text style={styles.createBtnText}>New Outing</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
+
+            {/* Overdue Banner */}
+            {stats?.overdue_count > 0 && (
+              <TouchableOpacity
+                style={styles.overdueBanner}
+                onPress={() => setStatusFilter('OVERDUE')}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['rgba(244,63,94,0.15)', 'rgba(244,63,94,0.08)']}
+                  style={styles.overdueBannerInner}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <View style={styles.overdueIconWrap}>
+                    <Ionicons name="warning" size={18} color={colors.rose} />
+                  </View>
+                  <Text style={styles.overdueText}>
+                    {stats.overdue_count} OVERDUE student{stats.overdue_count > 1 ? 's' : ''} — tap to review
+                  </Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.rose} />
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
 
             {/* KPI Stats */}
             {stats && (
               <View style={styles.statsRow}>
-                <StatCard label="Today's Total" value={stats.todays_outings} icon="📅" />
+                <StatCard label="Today's Outings" value={stats.todays_outings} icon="📅" accent={colors.primary} />
                 <StatCard label="Currently Out" value={stats.currently_outside} accent={colors.amber} icon="🟠" />
-                <StatCard label="Returned" value={stats.returned_today} accent={colors.emerald} icon="🟢" />
-              </View>
-            )}
-            {stats?.overdue_count > 0 && (
-              <View style={styles.overdueBanner}>
-                <Ionicons name="warning" size={18} color={colors.rose} />
-                <Text style={styles.overdueText}>
-                  ⚠ {stats.overdue_count} OVERDUE student{stats.overdue_count > 1 ? 's' : ''} — immediate action required!
-                </Text>
+                <StatCard label="Returned" value={stats.returned_today} accent={colors.emerald} icon="✅" />
               </View>
             )}
 
             {/* Search */}
             <View style={styles.searchWrap}>
-              <Ionicons name="search-outline" size={16} color={colors.muted} style={{ marginRight: 8 }} />
+              <Ionicons name="search" size={15} color={colors.dim} style={{ marginRight: 8 }} />
               <TextInput
                 style={styles.searchInput}
                 value={search}
@@ -148,8 +174,8 @@ export default function DashboardScreen({ navigation }) {
                 placeholderTextColor={colors.dim}
               />
               {search.length > 0 && (
-                <TouchableOpacity onPress={() => setSearch('')}>
-                  <Ionicons name="close-circle" size={16} color={colors.muted} />
+                <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
+                  <Ionicons name="close-circle" size={16} color={colors.dim} />
                 </TouchableOpacity>
               )}
             </View>
@@ -161,17 +187,32 @@ export default function DashboardScreen({ navigation }) {
                   key={f}
                   style={[styles.filterBtn, statusFilter === f && styles.filterBtnActive]}
                   onPress={() => setStatusFilter(f)}
+                  activeOpacity={0.75}
                 >
-                  <Text style={[styles.filterBtnText, statusFilter === f && styles.filterBtnTextActive]}>
-                    {f}
-                  </Text>
+                  {statusFilter === f ? (
+                    <LinearGradient
+                      colors={gradients.primary}
+                      style={styles.filterBtnGrad}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      <Text style={styles.filterBtnTextActive}>{f}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <Text style={styles.filterBtnText}>{f}</Text>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.sectionLabel}>
-              Live Outing Register · {filtered.length} record{filtered.length !== 1 ? 's' : ''}
-            </Text>
+            <View style={styles.sectionLabelRow}>
+              <Text style={styles.sectionLabel}>
+                Live Register
+              </Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{filtered.length}</Text>
+              </View>
+            </View>
           </View>
         )}
         renderItem={({ item }) => (
@@ -185,8 +226,11 @@ export default function DashboardScreen({ navigation }) {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="calendar-outline" size={40} color={colors.dim} />
-            <Text style={styles.emptyText}>No outings match your filter.</Text>
+            <LinearGradient colors={['rgba(99,102,241,0.12)', 'transparent']} style={styles.emptyIcon}>
+              <Ionicons name="calendar-outline" size={28} color={colors.primary} />
+            </LinearGradient>
+            <Text style={styles.emptyTitle}>No records found</Text>
+            <Text style={styles.emptyText}>No outings match your current filter.</Text>
           </View>
         }
         contentContainerStyle={styles.listContent}
@@ -197,50 +241,72 @@ export default function DashboardScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { color: colors.muted, fontSize: 14 },
-  listContent: { padding: 14, paddingBottom: 100 },
+  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  loadingIcon: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { color: colors.muted, fontSize: 13 },
+  listContent: { padding: 16, paddingBottom: 100 },
 
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  title: { color: colors.white, fontSize: 22, fontWeight: '800' },
-  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.emerald },
+  // Page Header
+  pageHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  pageHeaderLeft: { gap: 4 },
+  pageTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  titleIcon: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  title: { color: colors.white, fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 34 },
+  liveDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.emerald },
   liveTxt: { color: colors.muted, fontSize: 11 },
-  createBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.pink, borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 9,
-  },
-  createBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  createBtnWrap: { borderRadius: radius.md, overflow: 'hidden' },
+  createBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 10 },
+  createBtnText: { color: '#fff', fontSize: 13, fontWeight: '800' },
 
-  statsRow: { flexDirection: 'row', marginBottom: 12 },
-
-  overdueBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(153,27,27,0.3)',
-    borderRadius: 12, borderWidth: 1, borderColor: colors.rose,
-    padding: 12, marginBottom: 12,
+  // Overdue banner
+  overdueBanner: { borderRadius: radius.md, overflow: 'hidden', marginBottom: 14, borderWidth: 1, borderColor: colors.rose + '44' },
+  overdueBannerInner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
+  overdueIconWrap: {
+    width: 32, height: 32, borderRadius: 8,
+    backgroundColor: 'rgba(244,63,94,0.15)',
+    alignItems: 'center', justifyContent: 'center',
   },
   overdueText: { color: colors.rose, fontSize: 13, fontWeight: '700', flex: 1 },
 
+  // Stats
+  statsRow: { flexDirection: 'row', marginBottom: 14 },
+
+  // Search
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.border,
-    paddingHorizontal: 12, height: 44, marginBottom: 10,
+    backgroundColor: colors.bgCard, borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: colors.border,
+    paddingHorizontal: 14, height: 46, marginBottom: 12,
   },
   searchInput: { flex: 1, color: colors.white, fontSize: 13 },
+  clearBtn: { padding: 4 },
 
-  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  // Filters
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
   filterBtn: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
-    backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
+    borderRadius: radius.sm,
+    backgroundColor: colors.bgCard, borderWidth: 1.5, borderColor: colors.border,
+    overflow: 'hidden',
   },
-  filterBtnActive: { backgroundColor: colors.pink, borderColor: colors.pink },
-  filterBtnText: { color: colors.muted, fontSize: 11, fontWeight: '700' },
-  filterBtnTextActive: { color: '#fff' },
+  filterBtnActive: { borderColor: 'transparent' },
+  filterBtnGrad: { paddingHorizontal: 12, paddingVertical: 6 },
+  filterBtnText: { color: colors.muted, fontSize: 11, fontWeight: '700', paddingHorizontal: 12, paddingVertical: 6 },
+  filterBtnTextActive: { color: '#fff', fontSize: 11, fontWeight: '800' },
 
-  sectionLabel: { color: colors.dim, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', marginBottom: 10 },
+  // Section label
+  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  sectionLabel: { color: colors.dim, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  countBadge: {
+    backgroundColor: colors.primaryGlow, borderRadius: 10,
+    paddingHorizontal: 8, paddingVertical: 2,
+    borderWidth: 1, borderColor: colors.primary + '30',
+  },
+  countBadgeText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
 
-  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 10 },
+  // Empty
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 10 },
+  emptyIcon: { width: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { color: colors.white, fontSize: 16, fontWeight: '700' },
   emptyText: { color: colors.muted, fontSize: 13 },
 });

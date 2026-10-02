@@ -3,10 +3,11 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { resolveOverdue } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme';
+import { colors, gradients, radius } from '../theme';
 
 export default function ResolveOverdueModal({ navigation, route }) {
   const { outing } = route.params;
@@ -61,17 +62,19 @@ export default function ResolveOverdueModal({ navigation, route }) {
 
         {/* Buttons */}
         <View style={styles.btnRow}>
-          <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()} activeOpacity={0.75}>
             <Text style={styles.cancelBtnText}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
-            {loading
-              ? <ActivityIndicator color="#fff" size="small" />
-              : <>
-                  <Ionicons name="checkmark-circle" size={16} color="#fff" />
-                  <Text style={styles.submitBtnText}>Confirm Resolution</Text>
-                </>
-            }
+          <TouchableOpacity style={styles.submitBtnWrap} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
+            <LinearGradient colors={gradients.success} style={styles.submitBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+              {loading
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <>
+                    <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                    <Text style={styles.submitBtnText}>Confirm Resolution</Text>
+                  </>
+              }
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -98,36 +101,37 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   iconWrap: {
-    width: 42, height: 42, borderRadius: 12,
-    backgroundColor: 'rgba(16,185,129,0.15)', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(16,185,129,0.3)',
+    width: 44, height: 44, borderRadius: 13,
+    backgroundColor: 'rgba(16,185,129,0.12)', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: 'rgba(16,185,129,0.3)',
   },
   title: { color: colors.white, fontSize: 17, fontWeight: '800' },
   subtitle: { color: colors.muted, fontSize: 12, marginTop: 2 },
   closeBtn: { padding: 4 },
 
   infoBox: {
-    backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1,
+    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1.5,
     borderColor: colors.border, padding: 14, marginBottom: 16,
   },
 
   label: { color: colors.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
   confirmBox: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: 'rgba(16,185,129,0.1)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(16,185,129,0.25)',
+    backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: radius.md, borderWidth: 1.5, borderColor: 'rgba(16,185,129,0.25)',
     padding: 14, marginBottom: 20,
   },
   confirmText: { color: colors.white, fontSize: 13, flex: 1, lineHeight: 18 },
 
   btnRow: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
-    flex: 1, alignItems: 'center', paddingVertical: 13,
-    backgroundColor: colors.bgCard, borderRadius: 14, borderWidth: 1, borderColor: colors.border,
+    flex: 1, alignItems: 'center', paddingVertical: 14,
+    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border,
   },
   cancelBtnText: { color: colors.muted, fontSize: 14, fontWeight: '700' },
+  submitBtnWrap: { flex: 2, borderRadius: radius.md, overflow: 'hidden' },
   submitBtn: {
-    flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingVertical: 13, backgroundColor: colors.emerald, borderRadius: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 14,
   },
   submitBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
 });

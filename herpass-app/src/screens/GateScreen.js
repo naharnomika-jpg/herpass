@@ -3,11 +3,12 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, RefreshControl, Alert, ActivityIndicator, Linking,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { getOutings, markOut, markReturned } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme';
+import { colors, gradients, radius } from '../theme';
 import { POLL_INTERVAL } from '../config';
 import StatusBadge from '../components/StatusBadge';
 
@@ -72,7 +73,10 @@ export default function GateScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.emerald} size="large" />
+        <LinearGradient colors={gradients.success} style={styles.loadingIcon}>
+          <Ionicons name="shield-checkmark" size={22} color="#fff" />
+        </LinearGradient>
+        <ActivityIndicator color={colors.emerald} size="large" style={{ marginTop: 12 }} />
         <Text style={styles.loadingText}>Loading gate data...</Text>
       </View>
     );
@@ -80,27 +84,47 @@ export default function GateScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Gate Header Banner */}
-      <View style={styles.gateBanner}>
-        <View style={styles.gateBannerIcon}>
-          <Ionicons name="shield-checkmark" size={24} color="#fff" />
-        </View>
-        <View>
+      {/* Gate Banner */}
+      <LinearGradient
+        colors={['rgba(16,185,129,0.12)', 'rgba(16,185,129,0.04)']}
+        style={styles.gateBanner}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <LinearGradient colors={gradients.success} style={styles.gateIconBox}>
+          <Ionicons name="shield-checkmark" size={22} color="#fff" />
+        </LinearGradient>
+        <View style={{ flex: 1 }}>
           <Text style={styles.gateTitle}>Gate Verification Desk</Text>
-          <Text style={styles.gateSub}>Mark Departure & Return</Text>
+          <Text style={styles.gateSub}>Mark Departure & Return in real-time</Text>
         </View>
-      </View>
+        <View style={styles.gateCountWrap}>
+          <View style={styles.gateCountChip}>
+            <Text style={styles.gateCountLabel}>Pending</Text>
+            <Text style={[styles.gateCountValue, { color: colors.blue }]}>{upcoming.length}</Text>
+          </View>
+          <View style={[styles.gateCountChip, { borderColor: colors.amber + '40' }]}>
+            <Text style={styles.gateCountLabel}>Outside</Text>
+            <Text style={[styles.gateCountValue, { color: colors.amber }]}>{outside.length}</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
-      {/* Search */}
-      <View style={styles.searchWrap}>
-        <Ionicons name="search-outline" size={16} color={colors.muted} style={{ marginRight: 8 }} />
+      {/* Search Bar */}
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={15} color={colors.dim} />
         <TextInput
           style={styles.searchInput}
           value={search}
           onChangeText={setSearch}
-          placeholder="Quick Room / Student search..."
+          placeholder="Quick room / student search..."
           placeholderTextColor={colors.dim}
         />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={15} color={colors.dim} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <FlatList
@@ -113,39 +137,40 @@ export default function GateScreen({ navigation }) {
           if (item.key === 'upcoming') {
             return (
               <View>
-                {/* Section: Pending Departure */}
-                <View style={styles.sectionHeader}>
-                  <Ionicons name="log-out-outline" size={18} color={colors.blue} />
-                  <Text style={[styles.sectionTitle, { color: colors.blue }]}>
-                    Pending Departure (Mark OUT)
-                  </Text>
-                  <View style={[styles.countBadge, { backgroundColor: 'rgba(59,130,246,0.2)', borderColor: 'rgba(59,130,246,0.3)' }]}>
-                    <Text style={{ color: colors.blue, fontSize: 11, fontWeight: '700' }}>{upcoming.length}</Text>
-                  </View>
-                </View>
+                <SectionHeader
+                  icon="log-out-outline"
+                  title="Pending Departure"
+                  subtitle="Mark OUT"
+                  count={upcoming.length}
+                  color={colors.blue}
+                  gradColors={['rgba(59,130,246,0.15)', 'rgba(59,130,246,0.06)']}
+                />
                 {upcoming.length === 0
-                  ? <View style={styles.emptyCard}><Text style={styles.emptyTxt}>No pending departures at gate.</Text></View>
+                  ? <EmptySection text="No pending departures at gate." icon="checkmark-circle-outline" color={colors.blue} />
                   : upcoming.map(o => (
-                    <GateUpcomingCard key={o.outing_id} outing={o} onMarkOut={() => doMarkOut(o.outing_id)} onExtend={() => navigation.navigate('ExtendDeadline', { outing: o })} />
+                    <GateUpcomingCard
+                      key={o.outing_id}
+                      outing={o}
+                      onMarkOut={() => doMarkOut(o.outing_id)}
+                      onExtend={() => navigation.navigate('ExtendDeadline', { outing: o })}
+                    />
                   ))
                 }
               </View>
             );
           }
           return (
-            <View style={{ marginTop: 10 }}>
-              {/* Section: Currently Outside */}
-              <View style={styles.sectionHeader}>
-                <Ionicons name="log-in-outline" size={18} color={colors.amber} />
-                <Text style={[styles.sectionTitle, { color: colors.amber }]}>
-                  Currently Outside (Mark RETURNED)
-                </Text>
-                <View style={[styles.countBadge, { backgroundColor: 'rgba(245,158,11,0.2)', borderColor: 'rgba(245,158,11,0.3)' }]}>
-                  <Text style={{ color: colors.amber, fontSize: 11, fontWeight: '700' }}>{outside.length}</Text>
-                </View>
-              </View>
+            <View style={{ marginTop: 6 }}>
+              <SectionHeader
+                icon="log-in-outline"
+                title="Currently Outside"
+                subtitle="Mark RETURNED"
+                count={outside.length}
+                color={colors.amber}
+                gradColors={['rgba(245,158,11,0.15)', 'rgba(245,158,11,0.06)']}
+              />
               {outside.length === 0
-                ? <View style={styles.emptyCard}><Text style={styles.emptyTxt}>No students currently outside.</Text></View>
+                ? <EmptySection text="No students currently outside." icon="home-outline" color={colors.emerald} />
                 : outside.map(o => (
                   <GateOutsideCard
                     key={o.outing_id}
@@ -164,34 +189,74 @@ export default function GateScreen({ navigation }) {
   );
 }
 
+function SectionHeader({ icon, title, subtitle, count, color, gradColors }) {
+  return (
+    <LinearGradient colors={gradColors} style={styles.sectionHeader} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+      <View style={[styles.sectionIconWrap, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon} size={16} color={color} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.sectionTitle, { color }]}>{title}</Text>
+        <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+      </View>
+      <View style={[styles.countPill, { backgroundColor: color + '15', borderColor: color + '40' }]}>
+        <Text style={[styles.countPillText, { color }]}>{count}</Text>
+      </View>
+    </LinearGradient>
+  );
+}
+
+function EmptySection({ text, icon, color }) {
+  return (
+    <View style={styles.emptyCard}>
+      <Ionicons name={icon} size={22} color={colors.dim} />
+      <Text style={styles.emptyText}>{text}</Text>
+    </View>
+  );
+}
+
 function GateUpcomingCard({ outing, onMarkOut, onExtend }) {
   return (
     <View style={styles.gateCard}>
-      <View style={styles.cardHeaderRow}>
-        <View>
-          <Text style={styles.cardName}>{outing.student_name}</Text>
-          <Text style={[styles.cardMeta, { color: colors.blue }]}>
-            Room {outing.room_number} · {outing.student_code}
-          </Text>
+      <View style={[styles.cardAccentBar, { backgroundColor: colors.blue }]} />
+      <View style={styles.gateCardContent}>
+        {/* Header */}
+        <View style={styles.cardTopRow}>
+          <LinearGradient colors={['#1D4ED8', '#3B82F6']} style={styles.miniAvatar}>
+            <Text style={styles.miniAvatarText}>{outing.student_name?.charAt(0)?.toUpperCase()}</Text>
+          </LinearGradient>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardName}>{outing.student_name}</Text>
+            <Text style={[styles.cardMeta, { color: colors.blue }]}>
+              Room {outing.room_number} · {outing.student_code}
+            </Text>
+          </View>
+          <View style={[styles.timePill, { borderColor: colors.blue + '40', backgroundColor: colors.blueDim }]}>
+            <Ionicons name="time-outline" size={10} color={colors.blue} />
+            <Text style={{ color: colors.blue, fontSize: 11, fontWeight: '800' }}>{outing.departure_time}</Text>
+          </View>
         </View>
-        <View style={[styles.timePill, { borderColor: 'rgba(59,130,246,0.4)' }]}>
-          <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700' }}>{outing.departure_time}</Text>
+
+        {/* Destination */}
+        <View style={styles.infoRow}>
+          <Ionicons name="location" size={11} color={colors.dim} />
+          <Text style={styles.infoText}>{outing.destination} · {outing.reason}</Text>
         </View>
-      </View>
-      <View style={styles.destinationBox}>
-        <Text style={styles.destLabel}>Destination: </Text>
-        <Text style={styles.destValue}>{outing.destination} ({outing.reason})</Text>
-      </View>
-      <View style={styles.gateActionRow}>
-        <Text style={styles.deadlineText}>Return By: {outing.return_deadline}</Text>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <TouchableOpacity style={styles.extendSmBtn} onPress={onExtend}>
-            <Ionicons name="time-outline" size={14} color={colors.muted} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.markOutBtn} onPress={onMarkOut}>
-            <Ionicons name="log-out-outline" size={15} color="#fff" />
-            <Text style={styles.markBtnText}>MARK OUT</Text>
-          </TouchableOpacity>
+
+        {/* Actions */}
+        <View style={styles.actionRow}>
+          <Text style={styles.deadlineText}>Return By: <Text style={{ color: colors.white }}>{outing.return_deadline}</Text></Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity style={styles.iconBtn} onPress={onExtend} activeOpacity={0.75}>
+              <Ionicons name="time-outline" size={14} color={colors.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.markOutBtnWrap} onPress={onMarkOut} activeOpacity={0.85}>
+              <LinearGradient colors={gradients.success} style={styles.markBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <Ionicons name="log-out-outline" size={13} color="#fff" />
+                <Text style={styles.markBtnText}>MARK OUT</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
@@ -201,35 +266,67 @@ function GateUpcomingCard({ outing, onMarkOut, onExtend }) {
 function GateOutsideCard({ outing, onMarkReturned, onResolve }) {
   const isOverdue = outing.status === 'OVERDUE';
   return (
-    <View style={[styles.gateCard, isOverdue && styles.overdueCard]}>
-      <View style={styles.cardHeaderRow}>
-        <View>
-          <Text style={styles.cardName}>{outing.student_name}</Text>
-          <Text style={[styles.cardMeta, { color: colors.amber }]}>
-            Room {outing.room_number} · 📞 {outing.student_phone}
-          </Text>
+    <View style={[styles.gateCard, isOverdue && styles.overdueGateCard]}>
+      <View style={[styles.cardAccentBar, { backgroundColor: isOverdue ? colors.rose : colors.amber }]} />
+      <View style={styles.gateCardContent}>
+        {/* Header */}
+        <View style={styles.cardTopRow}>
+          <LinearGradient
+            colors={isOverdue ? gradients.danger : ['#D97706', '#F59E0B']}
+            style={styles.miniAvatar}
+          >
+            <Text style={styles.miniAvatarText}>{outing.student_name?.charAt(0)?.toUpperCase()}</Text>
+          </LinearGradient>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardName}>{outing.student_name}</Text>
+            <Text style={[styles.cardMeta, { color: isOverdue ? colors.rose : colors.amber }]}>
+              Room {outing.room_number}
+            </Text>
+          </View>
+          <StatusBadge status={outing.status} />
         </View>
-        <StatusBadge status={outing.status} />
-      </View>
-      <View style={[styles.destinationBox, { flexDirection: 'row', justifyContent: 'space-between' }]}>
-        <Text style={styles.destLabel}>Out: <Text style={styles.destValue}>{outing.actual_departure ? outing.actual_departure.split(' ')[1] : outing.departure_time}</Text></Text>
-        <Text style={[styles.destLabel, { color: colors.rose }]}>Deadline: <Text style={[styles.destValue, { color: colors.rose }]}>{outing.return_deadline}</Text></Text>
-      </View>
-      <View style={styles.gateActionRow}>
-        <TouchableOpacity onPress={() => Linking.openURL(`tel:${outing.student_phone}`)} style={styles.callBtn}>
-          <Ionicons name="call-outline" size={14} color={colors.emerald} />
-          <Text style={{ color: colors.emerald, fontSize: 12, fontWeight: '700' }}>Call</Text>
-        </TouchableOpacity>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {isOverdue && (
-            <TouchableOpacity style={styles.resolveBtn} onPress={onResolve}>
-              <Text style={styles.markBtnText}>Resolve</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={styles.markReturnedBtn} onPress={onMarkReturned}>
-            <Ionicons name="log-in-outline" size={15} color="#fff" />
-            <Text style={styles.markBtnText}>RETURNED</Text>
+
+        {/* Time info */}
+        <View style={styles.timeInfoRow}>
+          <View style={styles.timeInfoChip}>
+            <Text style={styles.timeInfoLabel}>Out Since</Text>
+            <Text style={styles.timeInfoValue}>
+              {outing.actual_departure ? outing.actual_departure.split(' ')[1] : outing.departure_time}
+            </Text>
+          </View>
+          <View style={[styles.timeInfoChip, isOverdue && { borderColor: colors.rose + '44', backgroundColor: 'rgba(244,63,94,0.08)' }]}>
+            <Text style={[styles.timeInfoLabel, isOverdue && { color: colors.rose }]}>Deadline</Text>
+            <Text style={[styles.timeInfoValue, { color: isOverdue ? colors.rose : colors.amber }]}>
+              {outing.return_deadline}
+            </Text>
+          </View>
+        </View>
+
+        {/* Actions */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            onPress={() => Linking.openURL(`tel:${outing.student_phone}`)}
+            style={styles.callBtn}
+            activeOpacity={0.75}
+          >
+            <Ionicons name="call" size={13} color={colors.emerald} />
+            <Text style={{ color: colors.emerald, fontSize: 12, fontWeight: '700' }}>Call</Text>
           </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {isOverdue && (
+              <TouchableOpacity style={styles.resolveWrap} onPress={onResolve} activeOpacity={0.85}>
+                <LinearGradient colors={gradients.danger} style={styles.markBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Text style={styles.markBtnText}>Resolve</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.markOutBtnWrap} onPress={onMarkReturned} activeOpacity={0.85}>
+              <LinearGradient colors={gradients.blue} style={styles.markBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <Ionicons name="log-in-outline" size={13} color="#fff" />
+                <Text style={styles.markBtnText}>RETURNED</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
@@ -238,89 +335,117 @@ function GateOutsideCard({ outing, onMarkReturned, onResolve }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { color: colors.muted, fontSize: 14 },
-  listContent: { padding: 14, paddingBottom: 100 },
+  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  loadingIcon: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { color: colors.muted, fontSize: 13 },
+  listContent: { padding: 16, paddingBottom: 100 },
 
+  // Gate Banner
   gateBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: 'rgba(6,78,59,0.3)',
-    borderBottomWidth: 1, borderBottomColor: 'rgba(16,185,129,0.3)',
-    padding: 14,
+    padding: 16,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(16,185,129,0.2)',
   },
-  gateBannerIcon: {
-    width: 48, height: 48, borderRadius: 14,
-    backgroundColor: colors.emerald, alignItems: 'center', justifyContent: 'center',
+  gateIconBox: {
+    width: 46, height: 46, borderRadius: 13,
+    alignItems: 'center', justifyContent: 'center',
   },
-  gateTitle: { color: colors.white, fontSize: 17, fontWeight: '800' },
-  gateSub: { color: colors.emerald, fontSize: 12 },
+  gateTitle: { color: colors.white, fontSize: 15, fontWeight: '800' },
+  gateSub: { color: colors.emerald, fontSize: 11, marginTop: 2 },
+  gateCountWrap: { flexDirection: 'row', gap: 6 },
+  gateCountChip: {
+    alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6,
+    backgroundColor: colors.bgCard, borderRadius: 10,
+    borderWidth: 1, borderColor: colors.blue + '40',
+  },
+  gateCountLabel: { color: colors.dim, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' },
+  gateCountValue: { fontSize: 18, fontWeight: '900' },
 
-  searchWrap: {
-    flexDirection: 'row', alignItems: 'center',
+  // Search
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: colors.bgCard, borderBottomWidth: 1, borderBottomColor: colors.border,
-    paddingHorizontal: 14, height: 46,
+    paddingHorizontal: 16, height: 46,
   },
   searchInput: { flex: 1, color: colors.white, fontSize: 13 },
 
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', flex: 1 },
-  countBadge: {
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: 10, borderWidth: 1,
+  // Section Header
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderRadius: radius.md, padding: 12, marginBottom: 10,
+    borderWidth: 1, borderColor: colors.borderDim,
   },
+  sectionIconWrap: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  sectionTitle: { fontSize: 13, fontWeight: '800' },
+  sectionSubtitle: { color: colors.dim, fontSize: 10, marginTop: 2 },
+  countPill: {
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 20, borderWidth: 1,
+  },
+  countPillText: { fontSize: 13, fontWeight: '900' },
 
+  // Empty
   emptyCard: {
-    backgroundColor: colors.bgCard, borderRadius: 14, padding: 20,
-    alignItems: 'center', borderWidth: 1, borderColor: colors.border, marginBottom: 10,
+    backgroundColor: colors.bgCard, borderRadius: radius.md, padding: 24,
+    alignItems: 'center', gap: 8,
+    borderWidth: 1, borderColor: colors.border, marginBottom: 10,
   },
-  emptyTxt: { color: colors.dim, fontSize: 13 },
+  emptyText: { color: colors.muted, fontSize: 13 },
 
+  // Gate Card
   gateCard: {
-    backgroundColor: colors.bgCard, borderRadius: 14, borderWidth: 1,
-    borderColor: colors.border, padding: 14, marginBottom: 10, gap: 10,
+    backgroundColor: colors.bgCard, borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: colors.border,
+    marginBottom: 10, flexDirection: 'row', overflow: 'hidden',
   },
-  overdueCard: {
-    borderColor: colors.rose, borderWidth: 2,
-    backgroundColor: 'rgba(153,27,27,0.25)',
+  overdueGateCard: {
+    borderColor: colors.rose + '60',
+    backgroundColor: 'rgba(244,63,94,0.05)',
   },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardName: { color: colors.white, fontSize: 15, fontWeight: '700' },
+  cardAccentBar: { width: 4 },
+  gateCardContent: { flex: 1, padding: 14, gap: 10 },
+
+  cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  miniAvatar: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  miniAvatarText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  cardName: { color: colors.white, fontSize: 14, fontWeight: '800' },
   cardMeta: { fontSize: 11, fontWeight: '600', marginTop: 2 },
   timePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     borderWidth: 1, borderRadius: 8,
     paddingHorizontal: 8, paddingVertical: 4,
   },
-  destinationBox: {
-    backgroundColor: 'rgba(15,23,42,0.5)',
-    borderRadius: 10, padding: 10, borderWidth: 1, borderColor: colors.borderDim,
+
+  infoRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.bgMuted, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 7,
+    borderWidth: 1, borderColor: colors.borderDim,
   },
-  destLabel: { color: colors.muted, fontSize: 12, fontWeight: '600' },
-  destValue: { color: colors.white, fontWeight: '600', fontSize: 12 },
-  gateActionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  infoText: { color: colors.muted, fontSize: 12, flex: 1 },
+
+  timeInfoRow: { flexDirection: 'row', gap: 8 },
+  timeInfoChip: {
+    flex: 1, backgroundColor: colors.bgMuted, borderRadius: 8,
+    padding: 8, borderWidth: 1, borderColor: colors.borderDim,
+  },
+  timeInfoLabel: { color: colors.dim, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' },
+  timeInfoValue: { color: colors.white, fontSize: 13, fontWeight: '800', marginTop: 3 },
+
+  actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   deadlineText: { color: colors.muted, fontSize: 11 },
-  markOutBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.emerald, borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 9,
-  },
-  markReturnedBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.blue, borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 9,
-  },
-  resolveBtn: {
-    backgroundColor: colors.rose, borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 9,
-  },
-  callBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.bgCard, borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 9,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  extendSmBtn: {
-    backgroundColor: colors.bgCard, borderRadius: 10,
+  iconBtn: {
+    backgroundColor: colors.bgMuted, borderRadius: 9,
     padding: 9, borderWidth: 1, borderColor: colors.border,
   },
+  markOutBtnWrap: { borderRadius: 9, overflow: 'hidden' },
+  resolveWrap: { borderRadius: 9, overflow: 'hidden' },
+  markBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 13, paddingVertical: 9 },
   markBtnText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  callBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: colors.bgMuted, borderRadius: 9,
+    paddingHorizontal: 12, paddingVertical: 9,
+    borderWidth: 1, borderColor: colors.emerald + '40',
+  },
 });

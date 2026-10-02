@@ -1,92 +1,137 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { colors, gradients, radius, STATUS_COLORS } from '../theme';
 import StatusBadge from './StatusBadge';
 
 export default function OutingCard({ outing, onMarkOut, onMarkReturned, onResolve, onExtend }) {
   const isOverdue = outing.status === 'OVERDUE';
   const isOut = outing.status === 'OUT';
   const isUpcoming = outing.status === 'UPCOMING';
+  const isReturned = outing.status === 'RETURNED';
+
+  const statusCfg = STATUS_COLORS[outing.status] || {};
+  const borderColor = isOverdue ? colors.rose : statusCfg.border || colors.border;
 
   return (
-    <View style={[styles.card, isOverdue && styles.overdueCard]}>
-      {/* Header Row */}
-      <View style={styles.headerRow}>
-        <View style={styles.studentInfo}>
-          <Text style={styles.studentName}>{outing.student_name}</Text>
-          <Text style={styles.studentMeta}>
-            Room {outing.room_number} · {outing.student_code}
-          </Text>
+    <View style={[styles.card, { borderColor }, isOverdue && styles.overdueCard]}>
+      {/* Status color bar */}
+      <View style={[styles.statusBar, { backgroundColor: statusCfg.text || colors.primary }]} />
+
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <View style={styles.avatarWrap}>
+            <LinearGradient
+              colors={isOverdue ? [colors.rose, '#BE123C'] : gradients.primary}
+              style={styles.avatar}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Text style={styles.avatarText}>{outing.student_name?.charAt(0)?.toUpperCase()}</Text>
+            </LinearGradient>
+          </View>
+          <View style={styles.studentInfo}>
+            <Text style={styles.studentName}>{outing.student_name}</Text>
+            <Text style={styles.studentMeta}>Room {outing.room_number} · {outing.student_code}</Text>
+          </View>
+          <StatusBadge status={outing.status} size="sm" />
         </View>
-        <StatusBadge status={outing.status} />
-      </View>
 
-      {/* Destination Row */}
-      <View style={styles.infoBox}>
-        <Text style={styles.infoLabel}>Destination</Text>
-        <Text style={styles.infoValue}>{outing.destination}</Text>
-        <Text style={styles.infoSub}>{outing.reason}</Text>
-      </View>
-
-      {/* Time Row */}
-      <View style={styles.timeRow}>
-        <View>
-          <Text style={styles.timeLbl}>Departs</Text>
-          <Text style={styles.timeVal}>{outing.departure_time}</Text>
+        {/* Destination */}
+        <View style={styles.destRow}>
+          <View style={styles.destIconWrap}>
+            <Ionicons name="location" size={12} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.destValue}>{outing.destination}</Text>
+            {outing.reason ? <Text style={styles.destReason}>{outing.reason}</Text> : null}
+          </View>
         </View>
-        <View>
-          <Text style={styles.timeLbl}>Return By</Text>
-          <Text style={[styles.timeVal, { color: isOverdue ? colors.rose : colors.white }]}>
-            {outing.return_deadline}
-          </Text>
+
+        {/* Time Chips */}
+        <View style={styles.timeRow}>
+          <TimeChip
+            icon="log-out-outline"
+            label="Departs"
+            value={outing.departure_time}
+            color={colors.blue}
+          />
+          <TimeChip
+            icon="time"
+            label="Return By"
+            value={outing.return_deadline}
+            color={isOverdue ? colors.rose : colors.amber}
+            highlight={isOverdue}
+          />
+          <TimeChip
+            icon="calendar-outline"
+            label="Date"
+            value={outing.outing_date}
+            color={colors.muted}
+          />
         </View>
-        <View>
-          <Text style={styles.timeLbl}>Date</Text>
-          <Text style={styles.timeVal}>{outing.outing_date}</Text>
-        </View>
+
+        {/* Actions */}
+        {(isUpcoming || isOut || isOverdue) && (
+          <View style={styles.actionRow}>
+            {isUpcoming && (
+              <TouchableOpacity style={styles.btnPrimary} onPress={() => onMarkOut(outing.outing_id)} activeOpacity={0.85}>
+                <LinearGradient colors={gradients.success} style={styles.btnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="log-out-outline" size={13} color="#fff" />
+                  <Text style={styles.btnText}>Mark OUT</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+            {(isOut || isOverdue) && (
+              <TouchableOpacity style={styles.btnPrimary} onPress={() => onMarkReturned(outing.outing_id)} activeOpacity={0.85}>
+                <LinearGradient colors={gradients.blue} style={styles.btnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="log-in-outline" size={13} color="#fff" />
+                  <Text style={styles.btnText}>Returned</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+            {isOverdue && (
+              <TouchableOpacity style={styles.btnPrimary} onPress={() => onResolve(outing)} activeOpacity={0.85}>
+                <LinearGradient colors={gradients.danger} style={styles.btnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="checkmark-circle-outline" size={13} color="#fff" />
+                  <Text style={styles.btnText}>Resolve</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+            <View style={styles.secondaryActions}>
+              {(isOut || isOverdue || isUpcoming) && (
+                <TouchableOpacity style={styles.btnSecondary} onPress={() => onExtend(outing)} activeOpacity={0.75}>
+                  <Ionicons name="time-outline" size={13} color={colors.muted} />
+                  <Text style={styles.btnSecondaryText}>Extend</Text>
+                </TouchableOpacity>
+              )}
+              {(isOut || isOverdue) && outing.student_phone ? (
+                <TouchableOpacity
+                  style={[styles.btnSecondary, { borderColor: colors.emerald + '44' }]}
+                  onPress={() => Linking.openURL(`tel:${outing.student_phone}`)}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons name="call" size={13} color={colors.emerald} />
+                  <Text style={[styles.btnSecondaryText, { color: colors.emerald }]}>Call</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </View>
+        )}
       </View>
+    </View>
+  );
+}
 
-      {/* Action Buttons */}
-      <View style={styles.actionRow}>
-        {isUpcoming && (
-          <TouchableOpacity style={[styles.btn, styles.btnEmerald]} onPress={() => onMarkOut(outing.outing_id)}>
-            <Ionicons name="log-out-outline" size={14} color="#fff" />
-            <Text style={styles.btnText}>Mark OUT</Text>
-          </TouchableOpacity>
-        )}
-
-        {(isOut || isOverdue) && (
-          <TouchableOpacity style={[styles.btn, styles.btnBlue]} onPress={() => onMarkReturned(outing.outing_id)}>
-            <Ionicons name="log-in-outline" size={14} color="#fff" />
-            <Text style={styles.btnText}>Returned</Text>
-          </TouchableOpacity>
-        )}
-
-        {isOverdue && (
-          <TouchableOpacity style={[styles.btn, styles.btnRose]} onPress={() => onResolve(outing)}>
-            <Ionicons name="checkmark-circle-outline" size={14} color="#fff" />
-            <Text style={styles.btnText}>Resolve</Text>
-          </TouchableOpacity>
-        )}
-
-        {(isOut || isOverdue || isUpcoming) && (
-          <TouchableOpacity style={[styles.btn, styles.btnSlate]} onPress={() => onExtend(outing)}>
-            <Ionicons name="time-outline" size={14} color={colors.muted} />
-            <Text style={[styles.btnText, { color: colors.muted }]}>Extend</Text>
-          </TouchableOpacity>
-        )}
-
-        {(isOut || isOverdue) && outing.student_phone ? (
-          <TouchableOpacity
-            style={[styles.btn, styles.btnSlate]}
-            onPress={() => Linking.openURL(`tel:${outing.student_phone}`)}
-          >
-            <Ionicons name="call-outline" size={14} color={colors.emerald} />
-            <Text style={[styles.btnText, { color: colors.emerald }]}>Call</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+function TimeChip({ icon, label, value, color, highlight }) {
+  return (
+    <View style={[styles.timeChip, highlight && styles.timeChipHighlight]}>
+      <Ionicons name={icon} size={10} color={color} style={{ marginBottom: 3 }} />
+      <Text style={styles.timeChipLabel}>{label}</Text>
+      <Text style={[styles.timeChipValue, { color }]}>{value}</Text>
     </View>
   );
 }
@@ -94,51 +139,76 @@ export default function OutingCard({ outing, onMarkOut, onMarkReturned, onResolv
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.bgCard,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 14,
-    marginBottom: 10,
-    gap: 10,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    marginBottom: 12,
+    flexDirection: 'row',
+    overflow: 'hidden',
   },
   overdueCard: {
-    borderColor: colors.rose,
-    borderWidth: 2,
-    backgroundColor: 'rgba(153,27,27,0.25)',
+    backgroundColor: 'rgba(244,63,94,0.05)',
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  statusBar: {
+    width: 4,
+    borderTopLeftRadius: radius.lg,
+    borderBottomLeftRadius: radius.lg,
+    opacity: 0.8,
   },
-  studentInfo: { flex: 1, marginRight: 10 },
-  studentName: { color: colors.white, fontSize: 15, fontWeight: '700' },
+  content: { flex: 1, padding: 14, gap: 10 },
+
+  // Header
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  avatarWrap: {},
+  avatar: {
+    width: 40, height: 40, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarText: { color: '#fff', fontWeight: '900', fontSize: 16 },
+  studentInfo: { flex: 1 },
+  studentName: { color: colors.white, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
   studentMeta: { color: colors.muted, fontSize: 11, marginTop: 2 },
-  infoBox: {
-    backgroundColor: 'rgba(15,23,42,0.6)',
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: colors.borderDim,
+
+  // Destination
+  destRow: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: colors.bgMuted,
+    borderRadius: radius.sm, padding: 10,
+    borderWidth: 1, borderColor: colors.borderDim,
   },
-  infoLabel: { color: colors.dim, fontSize: 10, fontWeight: '600', textTransform: 'uppercase' },
-  infoValue: { color: colors.white, fontSize: 13, fontWeight: '600', marginTop: 2 },
-  infoSub: { color: colors.muted, fontSize: 11 },
-  timeRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  timeLbl: { color: colors.dim, fontSize: 10, fontWeight: '600', textTransform: 'uppercase' },
-  timeVal: { color: colors.white, fontSize: 13, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
+  destIconWrap: {
+    width: 22, height: 22, borderRadius: 6,
+    backgroundColor: colors.primaryGlow,
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 1,
   },
-  btnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  btnEmerald: { backgroundColor: '#059669' },
-  btnBlue:   { backgroundColor: '#2563eb' },
-  btnRose:   { backgroundColor: '#e11d48' },
-  btnSlate:  { backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border },
+  destValue: { color: colors.white, fontSize: 13, fontWeight: '600' },
+  destReason: { color: colors.muted, fontSize: 11, marginTop: 2 },
+
+  // Times
+  timeRow: { flexDirection: 'row', gap: 6 },
+  timeChip: {
+    flex: 1, backgroundColor: colors.bgMuted,
+    borderRadius: radius.sm, padding: 8,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.borderDim,
+  },
+  timeChipHighlight: { borderColor: colors.rose + '44', backgroundColor: 'rgba(244,63,94,0.06)' },
+  timeChipLabel: { color: colors.dim, fontSize: 8, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  timeChipValue: { fontSize: 11, fontWeight: '800', fontVariant: ['tabular-nums'] },
+
+  // Actions
+  actionRow: { gap: 6 },
+  btnPrimary: { borderRadius: radius.sm, overflow: 'hidden' },
+  btnGrad: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: 9, paddingHorizontal: 14,
+  },
+  btnText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
+  secondaryActions: { flexDirection: 'row', gap: 6 },
+  btnSecondary: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+    backgroundColor: colors.bgMuted, borderRadius: radius.sm,
+    borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 8,
+  },
+  btnSecondaryText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
 });

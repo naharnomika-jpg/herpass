@@ -3,10 +3,11 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, ActivityIndicator, StatusBar, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { colors } from './src/theme';
+import { colors, gradients } from './src/theme';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -32,9 +33,34 @@ const navTheme = {
     card: colors.bgCard,
     border: colors.border,
     text: colors.white,
-    primary: colors.pink,
+    primary: colors.primary,
   },
 };
+
+const TAB_ICONS = {
+  Dashboard: { focused: 'grid', unfocused: 'grid-outline' },
+  'Gate Desk': { focused: 'shield-checkmark', unfocused: 'shield-checkmark-outline' },
+  Students: { focused: 'people', unfocused: 'people-outline' },
+  Alerts: { focused: 'notifications', unfocused: 'notifications-outline' },
+};
+
+function TabIcon({ routeName, focused, color, size }) {
+  const icons = TAB_ICONS[routeName] || { focused: 'ellipse', unfocused: 'ellipse-outline' };
+  const iconName = focused ? icons.focused : icons.unfocused;
+  return (
+    <View style={[tabStyles.iconWrap, focused && tabStyles.iconWrapActive]}>
+      {focused && (
+        <LinearGradient
+          colors={gradients.primary}
+          style={StyleSheet.absoluteFillObject}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+      )}
+      <Ionicons name={iconName} size={focused ? 20 : 22} color={focused ? '#fff' : color} />
+    </View>
+  );
+}
 
 function MainTabs() {
   const { user } = useAuth();
@@ -45,25 +71,24 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#111827',
+          backgroundColor: colors.bgCard,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 62,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 8,
         },
-        tabBarActiveTintColor: colors.pink,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.dim,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
-        tabBarIcon: ({ focused, color, size }) => {
-          const icons = {
-            Dashboard: focused ? 'grid' : 'grid-outline',
-            'Gate Desk': focused ? 'shield-checkmark' : 'shield-checkmark-outline',
-            Students: focused ? 'people' : 'people-outline',
-            Alerts: focused ? 'notifications' : 'notifications-outline',
-          };
-          return <Ionicons name={icons[route.name] || 'ellipse'} size={22} color={color} />;
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '700',
+          letterSpacing: 0.3,
+          marginTop: 2,
         },
+        tabBarIcon: ({ focused, color, size }) => (
+          <TabIcon routeName={route.name} focused={focused} color={color} size={size} />
+        ),
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
@@ -79,9 +104,15 @@ function AppNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.pink} size="large" />
-      </View>
+      <LinearGradient colors={gradients.hero} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ alignItems: 'center', gap: 16 }}>
+          <LinearGradient colors={gradients.primary} style={loadStyles.logoBox}>
+            <Ionicons name="shield-checkmark" size={28} color="#fff" />
+          </LinearGradient>
+          <ActivityIndicator color={colors.primary} size="large" />
+          <Text style={{ color: colors.muted, fontSize: 13 }}>Loading Herpass...</Text>
+        </View>
+      </LinearGradient>
     );
   }
 
@@ -90,7 +121,7 @@ function AppNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.bgCard },
         headerTintColor: colors.white,
-        headerTitleStyle: { fontWeight: '700', fontSize: 16 },
+        headerTitleStyle: { fontWeight: '800', fontSize: 16, letterSpacing: 0.3 },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.bg },
       }}
@@ -103,22 +134,28 @@ function AppNavigator() {
           <Stack.Screen
             name="CreateOuting"
             component={CreateOutingModal}
-            options={{ title: 'Create Outing', presentation: 'modal' }}
+            options={{
+              title: 'New Outing',
+              presentation: 'modal',
+              headerStyle: { backgroundColor: colors.bgCard },
+              headerTintColor: colors.white,
+              headerShadowVisible: false,
+            }}
           />
           <Stack.Screen
             name="ResolveOverdue"
             component={ResolveOverdueModal}
-            options={{ title: 'Resolve Overdue', presentation: 'modal' }}
+            options={{ title: 'Resolve Overdue', presentation: 'modal', headerStyle: { backgroundColor: colors.bgCard }, headerTintColor: colors.white, headerShadowVisible: false }}
           />
           <Stack.Screen
             name="ExtendDeadline"
             component={ExtendDeadlineModal}
-            options={{ title: 'Extend Deadline', presentation: 'modal' }}
+            options={{ title: 'Extend Deadline', presentation: 'modal', headerStyle: { backgroundColor: colors.bgCard }, headerTintColor: colors.white, headerShadowVisible: false }}
           />
           <Stack.Screen
             name="AddStudent"
             component={AddStudentModal}
-            options={{ title: 'Add Student', presentation: 'modal' }}
+            options={{ title: 'Add Student', presentation: 'modal', headerStyle: { backgroundColor: colors.bgCard }, headerTintColor: colors.white, headerShadowVisible: false }}
           />
         </>
       )}
@@ -136,3 +173,32 @@ export default function App() {
     </AuthProvider>
   );
 }
+
+const tabStyles = StyleSheet.create({
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  iconWrapActive: {
+    borderRadius: 10,
+  },
+});
+
+const loadStyles = StyleSheet.create({
+  logoBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 14,
+  },
+});

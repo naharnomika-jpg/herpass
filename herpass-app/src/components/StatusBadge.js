@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { STATUS_COLORS } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { STATUS_COLORS, STATUS_ICONS } from '../theme';
 
 export default function StatusBadge({ status, size = 'sm' }) {
-  const cfg = STATUS_COLORS[status] || { bg: '#1e293b', text: '#94a3b8', border: '#334155' };
-  const fontSize = size === 'lg' ? 13 : 10;
-  const px = size === 'lg' ? 10 : 7;
-  const py = size === 'lg' ? 5 : 3;
+  const cfg = STATUS_COLORS[status] || { bg: '#0F1629', text: '#94A3B8', border: '#1E2D50' };
+  const iconName = STATUS_ICONS[status];
+  const isLg = size === 'lg';
+  const fontSize = isLg ? 12 : 10;
+  const px = isLg ? 10 : 7;
+  const py = isLg ? 5 : 3;
+  const iconSize = isLg ? 13 : 10;
 
   return (
     <View
@@ -17,9 +22,13 @@ export default function StatusBadge({ status, size = 'sm' }) {
           borderColor: cfg.border,
           paddingHorizontal: px,
           paddingVertical: py,
+          gap: isLg ? 5 : 3,
         },
       ]}
     >
+      {iconName && (
+        <Ionicons name={iconName} size={iconSize} color={cfg.text} />
+      )}
       <Text style={[styles.text, { color: cfg.text, fontSize }]}>
         {status}
       </Text>
@@ -29,12 +38,14 @@ export default function StatusBadge({ status, size = 'sm' }) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   text: {
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
 });
