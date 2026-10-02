@@ -167,39 +167,30 @@ function switchRole(role) {
 
 // Navigation Tabs
 function navigateTab(tabId) {
-    document.querySelectorAll("main > section").forEach(sec => sec.classList.add("hidden"));
-    document.querySelectorAll(".nav-item").forEach(item => {
-        item.className = "nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/70";
-    });
-    document.querySelectorAll(".mobile-nav-item").forEach(item => {
-        item.classList.remove("text-pink-400", "font-semibold");
-        item.classList.add("text-slate-400");
-    });
+    // Hide all sections
+    document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
 
+    // Reset all sidebar nav items
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+    // Reset all mobile nav items
+    document.querySelectorAll('.mobile-nav-btn').forEach(item => item.classList.remove('active'));
+
+    // Activate sidebar item
     const activeNav = document.getElementById(`nav-${tabId}`);
-    if (activeNav) {
-        activeNav.className = "nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-pink-400 bg-pink-500/10 border border-pink-500/20 font-bold";
-    }
+    if (activeNav) activeNav.classList.add('active');
 
+    // Activate mobile nav item
     const activeMobileNav = document.getElementById(`mobile-nav-${tabId}`);
-    if (activeMobileNav) {
-        activeMobileNav.classList.remove("text-slate-400");
-        activeMobileNav.classList.add("text-pink-400", "font-semibold");
-    }
+    if (activeMobileNav) activeMobileNav.classList.add('active');
 
+    // Show target section
     const targetSec = document.getElementById(`view-${tabId}`);
-    if (targetSec) {
-        targetSec.classList.remove("hidden");
-    }
+    if (targetSec) targetSec.classList.add('active');
 
-    // Refresh tab specific data
+    // Refresh data for specific tabs
     if (tabId === 'guard-gate') renderGateCards();
-    if (tabId === 'overdue-list') renderOverdueList();
-    if (tabId === 'outings') renderAllOutingsTable();
     if (tabId === 'students') renderStudentsGrid();
-    if (tabId === 'student-portal') renderStudentPortal();
-    if (tabId === 'history-audit') fetchAuditLogs();
-    if (tabId === 'analytics') fetchAnalyticsData();
 
     lucide.createIcons();
 }
@@ -228,20 +219,22 @@ async function fetchDashboardData() {
         const statsRes = await fetch("/api/dashboard/stats");
         const stats = await statsRes.json();
 
-        if (document.getElementById("stat-total-students")) {
-            document.getElementById("stat-total-students").innerText = stats.total_students;
-        }
-        document.getElementById("stat-todays-outings").innerText = stats.todays_outings;
-        document.getElementById("stat-currently-outside").innerText = stats.currently_outside;
-        document.getElementById("stat-returned-today").innerText = stats.returned_today;
-        if (document.getElementById("stat-upcoming-today")) {
-            document.getElementById("stat-upcoming-today").innerText = stats.upcoming_today;
-        }
-        if (document.getElementById("stat-overdue-count")) {
-            document.getElementById("stat-overdue-count").innerText = stats.overdue_count;
-        }
-        if (document.getElementById("sidebarOverdueCount")) {
-            document.getElementById("sidebarOverdueCount").innerText = stats.overdue_count;
+        const safe = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val ?? '—'; };
+        safe('stat-todays-outings', stats.todays_outings);
+        safe('stat-currently-outside', stats.currently_outside);
+        safe('stat-returned-today', stats.returned_today);
+        safe('stat-total-students', stats.total_students);
+
+        // Overdue banner
+        const banner = document.getElementById('overdueBanner');
+        if (banner) {
+            if (stats.overdue_count > 0) {
+                banner.classList.remove('hidden');
+                const txt = document.getElementById('overdueBannerText');
+                if(txt) txt.innerText = `${stats.overdue_count} OVERDUE student${stats.overdue_count>1?'s':''} — tap to review`;
+            } else {
+                banner.classList.add('hidden');
+            }
         }
 
         const outingsRes = await fetch("/api/outings");
@@ -263,44 +256,102 @@ function hideOverdueBanner() {
     document.getElementById("overdueBanner").classList.add("hidden");
 }
 
-// Render Dashboard Outings Table
+// Render Dashboard — Mobile Cards + Desktop Table
 function renderDashboardTable() {
-    const tbody = document.getElementById("outingsTableBody");
-    const searchVal = document.getElementById("dashboardSearchInput").value.toLowerCase();
+    const searchVal = (document.getElementById('dashboardSearchInput')?.value || '').toLowerCase();
 
     const filtered = allOutings.filter(o => {
-        const matchesStatus = currentFilterStatus === 'ALL' || 
-            o.status === currentFilterStatus || 
+        const matchesStatus = currentFilterStatus === 'ALL' ||
+            o.status === currentFilterStatus ||
             (currentFilterStatus === 'OUT' && (o.status === 'OVERDUE' || o.status === 'RESOLVED'));
-        const matchesSearch = !searchVal || 
-            o.student_name.toLowerCase().includes(searchVal) ||
-            o.room_number.toLowerCase().includes(searchVal) ||
-            o.outing_id.toLowerCase().includes(searchVal) ||
-            o.destination.toLowerCase().includes(searchVal);
+        const matchesSearch = !searchVal ||
+            o.student_name?.toLowerCase().includes(searchVal) ||
+            o.room_number?.toLowerCase().includes(searchVal) ||
+            o.outing_id?.toLowerCase().includes(searchVal) ||
+            o.destination?.toLowerCase().includes(searchVal);
         return matchesStatus && matchesSearch;
     });
 
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">No outing records match your search filter.</td></tr>`;
-        return;
+    // Update count badge
+    const countEl = document.getElementById('registerCount');
+    if(countEl) countEl.innerText = filtered.length;
+
+    // ── Mobile cards ──
+    const cardList = document.getElementById('outingsCardList');
+    if (cardList) {
+        if (filtered.length === 0) {
+            cardList.innerHTML = `<div style="text-align:center;padding:48px 0;color:#4B5B78;font-size:14px;">No records match your filter.</div>`;
+        } else {
+            cardList.innerHTML = filtered.map(o => {
+                const isOverdue = o.status === 'OVERDUE';
+                const avatarColors = isOverdue ? ['#BE123C','#F43F5E'] : ['#6366F1','#8B5CF6'];
+                const barColor = { OUT:'#F59E0B', OVERDUE:'#F43F5E', RETURNED:'#10B981', UPCOMING:'#3B82F6', 'LATE RETURN':'#A855F7' }[o.status] || '#6366F1';
+                return `
+                <div class="outing-card ${isOverdue ? 'overdue' : ''}">
+                    <div class="outing-card-bar" style="background:${barColor};"></div>
+                    <div class="outing-card-body">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div class="avatar" style="background:linear-gradient(135deg,${avatarColors[0]},${avatarColors[1]});font-size:18px;">${o.student_name?.charAt(0)?.toUpperCase()}</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:800;color:#E2E8F0;font-size:15px;">${o.student_name}</div>
+                                <div style="font-size:12px;color:#94A3B8;margin-top:2px;">Room ${o.room_number} · ${o.student_code}</div>
+                            </div>
+                            <span class="status-badge status-${o.status.replace(' ','-')}">${o.status}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;background:#0A0F1E;border-radius:9px;padding:10px 12px;border:1px solid #131D35;">
+                            <div style="width:24px;height:24px;border-radius:7px;background:rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i data-lucide="map-pin" style="width:12px;height:12px;color:#818CF8;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:#E2E8F0;">${o.destination}</div>
+                                ${o.reason ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px;">${o.reason}</div>` : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:7px;">
+                            <div class="time-chip"><div class="time-chip-label">Departs</div><div class="time-chip-value" style="color:#3B82F6;">${o.departure_time}</div></div>
+                            <div class="time-chip ${isOverdue ? 'overdue' : ''}"><div class="time-chip-label">Return By</div><div class="time-chip-value" style="color:${isOverdue?'#F43F5E':'#F59E0B'}">${o.return_deadline}</div></div>
+                            <div class="time-chip"><div class="time-chip-label">Date</div><div class="time-chip-value" style="color:#94A3B8;font-size:11px;">${o.outing_date}</div></div>
+                        </div>
+                        ${(o.status === 'UPCOMING' || o.status === 'OUT' || o.status === 'OVERDUE') ? `
+                        <div class="action-row">
+                            <div class="action-btns">
+                                ${o.status === 'UPCOMING' ? `<button onclick="markOut('${o.outing_id}')" class="btn-primary btn-success" style="padding:9px 16px;font-size:12px;"><i data-lucide="log-out" style="width:14px;height:14px;"></i>Mark OUT</button>` : ''}
+                                ${(o.status === 'OUT' || o.status === 'OVERDUE') ? `<button onclick="markReturned('${o.outing_id}')" class="btn-primary btn-blue" style="padding:9px 16px;font-size:12px;"><i data-lucide="log-in" style="width:14px;height:14px;"></i>Returned</button>` : ''}
+                                ${o.status === 'OVERDUE' ? `<button onclick="openResolveModal('${o.outing_id}')" class="btn-primary btn-danger" style="padding:9px 16px;font-size:12px;">Resolve</button>` : ''}
+                            </div>
+                            <button onclick="openExtendModal('${o.outing_id}')" class="btn-ghost" style="padding:8px 12px;font-size:12px;">
+                                <i data-lucide="clock" style="width:14px;height:14px;"></i>Extend
+                            </button>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
     }
 
-    tbody.innerHTML = filtered.map(o => `
-        <tr class="hover:bg-slate-800/40 transition">
-            <td class="py-3.5 px-4">
-                <div class="font-bold text-white">${o.student_name}</div>
-            </td>
-            <td class="py-3.5 px-4 font-semibold text-slate-200">Room ${o.room_number}</td>
-            <td class="py-3.5 px-4">
-                <div class="text-slate-200 font-medium">${o.destination}</div>
-            </td>
-            <td class="py-3.5 px-4 text-slate-300 font-mono">${o.departure_time}</td>
-            <td class="py-3.5 px-4 font-mono font-bold ${o.status === 'OVERDUE' ? 'text-rose-400 font-extrabold animate-pulse' : 'text-slate-300'}">${o.return_deadline}</td>
-            <td class="py-3.5 px-4 text-right space-x-1">
-                ${getActionButtons(o)}
-            </td>
-        </tr>
-    `).join("");
+    // ── Desktop table ──
+    const tbody = document.getElementById('outingsTableBody');
+    if (tbody) {
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#4B5B78;font-size:14px;">No outing records match your search filter.</td></tr>`;
+        } else {
+            tbody.innerHTML = filtered.map(o => `
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div class="avatar" style="width:34px;height:34px;border-radius:9px;font-size:13px;background:linear-gradient(135deg,#6366F1,#8B5CF6);">${o.student_name?.charAt(0)?.toUpperCase()}</div>
+                            <div style="font-weight:800;color:#E2E8F0;">${o.student_name}</div>
+                        </div>
+                    </td>
+                    <td style="color:#94A3B8;">Room ${o.room_number}</td>
+                    <td style="color:#E2E8F0;font-weight:500;">${o.destination}</td>
+                    <td style="color:#94A3B8;font-family:monospace;">${o.departure_time}</td>
+                    <td style="font-family:monospace;font-weight:800;color:${o.status==='OVERDUE'?'#F43F5E':'#94A3B8'};">${o.return_deadline}</td>
+                    <td style="text-align:right;"><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">${getActionButtons(o)}</div></td>
+                </tr>
+            `).join('');
+        }
+    }
 
     lucide.createIcons();
 }
@@ -364,79 +415,114 @@ function filterOutings() {
 
 function setFilterStatus(status) {
     currentFilterStatus = status;
+    // Update filter chip active states
+    document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
+    const activeChip = document.getElementById('chip-' + status);
+    if (activeChip) activeChip.classList.add('active');
     renderDashboardTable();
 }
 
 // Render Guard Gate Verification Cards
 function renderGateCards() {
-    const upcomingContainer = document.getElementById("gateUpcomingList");
-    const outsideContainer = document.getElementById("gateOutsideList");
-    const gateSearch = document.getElementById("gateSearchInput")?.value.toLowerCase() || "";
+    const upcomingContainer = document.getElementById('gateUpcomingList');
+    const outsideContainer = document.getElementById('gateOutsideList');
+    const gateSearch = (document.getElementById('gateSearchInput')?.value || '').toLowerCase();
 
-    const upcomingList = allOutings.filter(o => o.status === 'UPCOMING' && (!gateSearch || o.student_name.toLowerCase().includes(gateSearch) || o.room_number.includes(gateSearch)));
-    const outsideList = allOutings.filter(o => (o.status === 'OUT' || o.status === 'OVERDUE' || o.status === 'RESOLVED') && (!gateSearch || o.student_name.toLowerCase().includes(gateSearch) || o.room_number.includes(gateSearch)));
+    const upcomingList = allOutings.filter(o =>
+        o.status === 'UPCOMING' &&
+        (!gateSearch || o.student_name?.toLowerCase().includes(gateSearch) || o.room_number?.includes(gateSearch))
+    );
+    const outsideList = allOutings.filter(o =>
+        (o.status === 'OUT' || o.status === 'OVERDUE' || o.status === 'RESOLVED') &&
+        (!gateSearch || o.student_name?.toLowerCase().includes(gateSearch) || o.room_number?.includes(gateSearch))
+    );
 
-    document.getElementById("gateUpcomingCount").innerText = upcomingList.length;
-    document.getElementById("gateOutsideCount").innerText = outsideList.length;
+    ['gateUpcomingCount','gateUpcomingBadge'].forEach(id => { const el=document.getElementById(id); if(el) el.innerText=upcomingList.length; });
+    ['gateOutsideCount','gateOutsideBadge'].forEach(id => { const el=document.getElementById(id); if(el) el.innerText=outsideList.length; });
+
+    if (!upcomingContainer || !outsideContainer) return;
 
     if (upcomingList.length === 0) {
-        upcomingContainer.innerHTML = `<div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center text-slate-500 text-xs">No pending departures at gate.</div>`;
+        upcomingContainer.innerHTML = `<div class="gate-card" style="display:flex;align-items:center;justify-content:center;padding:28px;color:#4B5B78;font-size:14px;">No pending departures at gate.</div>`;
     } else {
         upcomingContainer.innerHTML = upcomingList.map(o => `
-            <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-white text-sm">${o.student_name}</div>
-                        <div class="text-xs text-blue-400 font-semibold">Room ${o.room_number}</div>
+        <div class="gate-card">
+            <div class="gate-card-bar" style="background:#3B82F6;"></div>
+            <div class="gate-card-body">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="avatar" style="background:linear-gradient(135deg,#1D4ED8,#3B82F6);font-size:17px;">${o.student_name?.charAt(0)?.toUpperCase()}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:800;color:#E2E8F0;font-size:15px;">${o.student_name}</div>
+                        <div style="font-size:12px;color:#3B82F6;margin-top:2px;font-weight:600;">Room ${o.room_number} · ${o.student_code||''}</div>
                     </div>
-                    <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono text-xs border border-blue-500/30">${o.departure_time}</span>
+                    <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.1);">
+                        <i data-lucide="clock" style="width:11px;height:11px;color:#3B82F6;"></i>
+                        <span style="font-size:12px;font-weight:800;color:#3B82F6;">${o.departure_time}</span>
+                    </div>
                 </div>
-                
-                <div class="text-xs text-slate-300 bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
-                    <span class="font-semibold text-slate-200">Destination:</span> ${o.destination}
+                <div style="display:flex;align-items:center;gap:8px;background:#0A0F1E;border-radius:9px;padding:10px 12px;border:1px solid #131D35;">
+                    <i data-lucide="map-pin" style="width:13px;height:13px;color:#4B5B78;flex-shrink:0;"></i>
+                    <span style="font-size:13px;color:#94A3B8;">${o.destination}${o.reason?' · '+o.reason:''}</span>
                 </div>
-
-                <div class="flex items-center justify-between pt-1">
-                    <span class="text-[11px] text-slate-400">Return Deadline: ${o.return_deadline}</span>
-                    <button onclick="markOut('${o.outing_id}')" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-2 transition transform active:scale-95">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span>MARK OUT AT GATE</span>
-                    </button>
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <span style="font-size:12px;color:#94A3B8;">Return By: <strong style="color:#E2E8F0;">${o.return_deadline}</strong></span>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="openExtendModal('${o.outing_id}')" class="btn-ghost" style="padding:10px 12px;font-size:12px;">
+                            <i data-lucide="clock" style="width:14px;height:14px;"></i>
+                        </button>
+                        <button onclick="markOut('${o.outing_id}')" class="btn-primary btn-success" style="padding:11px 18px;font-size:13px;font-weight:900;">
+                            <i data-lucide="log-out" style="width:15px;height:15px;"></i>
+                            MARK OUT
+                        </button>
+                    </div>
                 </div>
             </div>
-        `).join("");
+        </div>`).join('');
     }
 
     if (outsideList.length === 0) {
-        outsideContainer.innerHTML = `<div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center text-slate-500 text-xs">No students currently outside.</div>`;
+        outsideContainer.innerHTML = `<div class="gate-card" style="display:flex;align-items:center;justify-content:center;padding:28px;color:#4B5B78;font-size:14px;">No students currently outside.</div>`;
     } else {
-        outsideContainer.innerHTML = outsideList.map(o => `
-            <div class="p-4 rounded-2xl ${o.status === 'OVERDUE' ? 'bg-rose-950/40 border-2 border-rose-500 animate-pulse' : 'bg-slate-900 border border-slate-800'} transition space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-white text-sm">${o.student_name}</div>
-                        <div class="text-xs text-amber-400 font-semibold">Room ${o.room_number} | Phone: ${o.student_phone}</div>
+        outsideContainer.innerHTML = outsideList.map(o => {
+            const isOverdue = o.status === 'OVERDUE';
+            return `
+        <div class="gate-card ${isOverdue?'overdue':''}">
+            <div class="gate-card-bar" style="background:${isOverdue?'#F43F5E':'#F59E0B'};"></div>
+            <div class="gate-card-body">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="avatar" style="background:${isOverdue?'linear-gradient(135deg,#BE123C,#F43F5E)':'linear-gradient(135deg,#D97706,#F59E0B)'};font-size:17px;">${o.student_name?.charAt(0)?.toUpperCase()}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:800;color:#E2E8F0;font-size:15px;">${o.student_name}</div>
+                        <div style="font-size:12px;color:${isOverdue?'#F43F5E':'#F59E0B'};margin-top:2px;font-weight:600;">Room ${o.room_number}</div>
                     </div>
-                    <span class="px-2.5 py-1 rounded text-xs font-bold ${getStatusBadgeClass(o.status)}">${o.status}</span>
+                    <span class="status-badge status-${o.status.replace(' ','-')}">${o.status}</span>
                 </div>
-
-                <div class="text-xs text-slate-300 bg-slate-800/50 p-2.5 rounded-xl border border-slate-800 flex justify-between">
-                    <div><span class="font-semibold text-slate-200">Out Time:</span> ${o.actual_departure ? o.actual_departure.split(' ')[1] : o.departure_time}</div>
-                    <div><span class="font-semibold text-slate-200">Return Deadline:</span> <span class="text-rose-400 font-bold">${o.return_deadline}</span></div>
+                <div style="display:flex;gap:10px;">
+                    <div class="time-chip">
+                        <div class="time-chip-label">Out Since</div>
+                        <div class="time-chip-value" style="color:#E2E8F0;">${o.actual_departure?o.actual_departure.split(' ')[1]:o.departure_time}</div>
+                    </div>
+                    <div class="time-chip" style="${isOverdue?'border-color:rgba(244,63,94,0.4);background:rgba(244,63,94,0.06);':''}">
+                        <div class="time-chip-label" style="${isOverdue?'color:#F43F5E;':''}">Deadline</div>
+                        <div class="time-chip-value" style="color:${isOverdue?'#F43F5E':'#F59E0B'}">${o.return_deadline}</div>
+                    </div>
                 </div>
-
-                <div class="flex items-center justify-between pt-1">
-                    <a href="tel:${o.student_phone}" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1 border border-slate-700">
-                        <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-400"></i>
-                        <span>Call Student</span>
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <a href="tel:${o.student_phone}" class="contact-tap" style="padding:10px 14px;border-radius:10px;">
+                        <i data-lucide="phone" style="width:15px;height:15px;color:#10B981;flex-shrink:0;"></i>
+                        <span style="font-size:13px;font-weight:700;color:#10B981;">Call</span>
                     </a>
-                    <button onclick="markReturned('${o.outing_id}')" class="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 flex items-center space-x-2 transition transform active:scale-95">
-                        <i data-lucide="log-in" class="w-4 h-4"></i>
-                        <span>MARK RETURNED</span>
-                    </button>
+                    <div style="display:flex;gap:8px;">
+                        ${isOverdue ? `<button onclick="openResolveModal('${o.outing_id}')" class="btn-primary btn-danger" style="padding:11px 16px;font-size:12px;">Resolve</button>` : ''}
+                        <button onclick="markReturned('${o.outing_id}')" class="btn-primary btn-blue" style="padding:11px 18px;font-size:13px;font-weight:900;">
+                            <i data-lucide="log-in" style="width:15px;height:15px;"></i>
+                            RETURNED
+                        </button>
+                    </div>
                 </div>
             </div>
-        `).join("");
+        </div>`;
+        }).join('');
     }
 
     lucide.createIcons();
@@ -668,21 +754,87 @@ function callGuardian(studentId) {
 
 // Render Students Grid
 function renderStudentsGrid() {
-    const grid = document.getElementById("studentsGrid");
-    grid.innerHTML = allStudents.map(s => `
-        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 hover:border-slate-700 transition">
-            <div>
-                <h3 class="font-heading font-bold text-base text-white">${s.name}</h3>
-                <div class="text-xs text-pink-400 font-semibold">Room ${s.room_number}</div>
-                <div class="text-[11px] text-slate-400">${s.course} (${s.year})</div>
-            </div>
+    const grid = document.getElementById('studentsGrid');
+    if (!grid) return;
+    const searchVal = (document.getElementById('studentSearchInput')?.value || '').toLowerCase();
 
-            <div class="space-y-1.5 text-xs bg-slate-800/50 p-3 rounded-xl border border-slate-800 text-slate-300">
-                <div><span class="text-slate-400">Student Phone:</span> <span class="font-mono text-white">${s.phone}</span></div>
-                <div><span class="text-slate-400">Guardian Contact:</span> <span class="text-white">${s.guardian_contact}</span></div>
+    const filtered = allStudents.filter(s =>
+        !searchVal ||
+        s.name?.toLowerCase().includes(searchVal) ||
+        s.room_number?.toLowerCase().includes(searchVal) ||
+        s.course?.toLowerCase().includes(searchVal) ||
+        s.student_id?.toLowerCase().includes(searchVal)
+    );
+
+    // Update outside/present counts
+    const outsideCount = allStudents.filter(s => s.status === 'OUTSIDE').length;
+    const safe = (id, val) => { const el=document.getElementById(id); if(el) el.innerText=val; };
+    safe('stat-total-students', allStudents.length);
+    safe('stat-outside-count', outsideCount);
+    safe('stat-present-count', allStudents.length - outsideCount);
+
+    const GRAD_POOL = [
+        'linear-gradient(135deg,#6366F1,#8B5CF6)',
+        'linear-gradient(135deg,#EC4899,#8B5CF6)',
+        'linear-gradient(135deg,#3B82F6,#6366F1)',
+        'linear-gradient(135deg,#10B981,#3B82F6)',
+        'linear-gradient(135deg,#F59E0B,#EF4444)',
+    ];
+    const getGrad = name => GRAD_POOL[(name?.charCodeAt(0)||0) % GRAD_POOL.length];
+    const isOutside = s => s.status === 'OUTSIDE';
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:56px 0;color:#4B5B78;font-size:14px;">No students found.</div>`;
+        return;
+    }
+
+    grid.innerHTML = filtered.map(s => `
+        <div class="student-card">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div class="avatar avatar-lg" style="background:${getGrad(s.name)};flex-shrink:0;">${s.name?.charAt(0)?.toUpperCase()}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:800;color:#E2E8F0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
+                        <span style="display:flex;align-items:center;gap:4px;background:rgba(99,102,241,0.15);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#818CF8;">
+                            <i data-lucide="home" style="width:10px;height:10px;"></i>
+                            Room ${s.room_number}
+                        </span>
+                        <span style="font-size:11px;color:#94A3B8;">${s.course||''}</span>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid ${isOutside(s)?'rgba(245,158,11,0.4)':'rgba(16,185,129,0.4)'};background:${isOutside(s)?'rgba(245,158,11,0.1)':'rgba(16,185,129,0.1)'};flex-shrink:0;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:${isOutside(s)?'#F59E0B':'#10B981'};display:inline-block;"></span>
+                    <span style="font-size:11px;font-weight:800;color:${isOutside(s)?'#F59E0B':'#10B981'};">${isOutside(s)?'OUT':'IN'}</span>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;background:#0A0F1E;border-radius:9px;padding:8px 12px;border:1px solid #131D35;">
+                <i data-lucide="id-card" style="width:13px;height:13px;color:#4B5B78;flex-shrink:0;"></i>
+                <span style="font-size:12px;color:#94A3B8;font-family:monospace;">${s.student_id||''}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <a href="tel:${s.phone}" class="contact-tap">
+                    <div style="width:34px;height:34px;border-radius:9px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="phone" style="width:15px;height:15px;color:#10B981;"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#4B5B78;">Student Phone</div>
+                        <div style="font-size:13px;font-weight:600;color:#E2E8F0;margin-top:2px;">${s.phone||'—'}</div>
+                    </div>
+                    ${s.phone ? '<i data-lucide="phone-call" style="width:14px;height:14px;color:#10B981;opacity:0.7;flex-shrink:0;"></i>' : ''}
+                </a>
+                <a href="tel:${s.guardian_contact}" class="contact-tap">
+                    <div style="width:34px;height:34px;border-radius:9px;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="users" style="width:15px;height:15px;color:#3B82F6;"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#4B5B78;">Guardian Contact</div>
+                        <div style="font-size:13px;font-weight:600;color:#E2E8F0;margin-top:2px;">${s.guardian_contact||'—'}</div>
+                    </div>
+                    ${s.guardian_contact ? '<i data-lucide="phone-call" style="width:14px;height:14px;color:#3B82F6;opacity:0.7;flex-shrink:0;"></i>' : ''}
+                </a>
             </div>
         </div>
-    `).join("");
+    `).join('');
 
     lucide.createIcons();
 }
@@ -732,18 +884,46 @@ async function fetchNotifications() {
 }
 
 function renderNotificationsList() {
-    const container = document.getElementById("notificationsList");
+    const container = document.getElementById('notificationsList');
     if (!container) return;
 
-    container.innerHTML = allNotifications.map(n => `
-        <div class="p-3.5 rounded-2xl ${n.priority === 'CRITICAL' ? 'bg-rose-950/60 border border-rose-500' : 'bg-slate-800 border border-slate-700'} text-xs space-y-1">
-            <div class="flex items-center justify-between">
-                <span class="font-extrabold ${n.priority === 'CRITICAL' ? 'text-rose-400 animate-pulse' : 'text-blue-400'}">${n.type}</span>
-                <span class="text-[10px] text-slate-400">${n.created_at.split(' ')[1] || ''}</span>
+    // Update mobile dot
+    const mobileDot = document.getElementById('mobileNotifDot');
+    if(mobileDot) mobileDot.classList.toggle('hidden', allNotifications.length === 0);
+
+    const PRIORITY = {
+        CRITICAL: { bg:'rgba(244,63,94,0.1)',border:'rgba(244,63,94,0.4)',bar:'#F43F5E',iconColor:'#F43F5E',iconBg:'rgba(244,63,94,0.15)' },
+        HIGH:     { bg:'rgba(245,158,11,0.07)',border:'rgba(245,158,11,0.35)',bar:'#F59E0B',iconColor:'#F59E0B',iconBg:'rgba(245,158,11,0.15)' },
+        INFO:     { bg:'rgba(59,130,246,0.05)',border:'rgba(59,130,246,0.25)',bar:'#3B82F6',iconColor:'#3B82F6',iconBg:'rgba(59,130,246,0.15)' },
+    };
+
+    if (allNotifications.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:48px 0;color:#4B5B78;font-size:14px;">No notifications at this time.</div>`;
+        return;
+    }
+
+    container.innerHTML = allNotifications.map(n => {
+        const cfg = PRIORITY[n.priority] || PRIORITY.INFO;
+        return `
+        <div class="notif-card ${(n.priority||'').toLowerCase()}" style="background:${cfg.bg};border-color:${cfg.border};">
+            <div class="notif-bar" style="background:${cfg.bar};"></div>
+            <div class="notif-body">
+                <div style="display:flex;align-items:flex-start;gap:12px;">
+                    <div style="width:38px;height:38px;border-radius:11px;background:${cfg.iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="${n.priority==='CRITICAL'?'alert-triangle':n.priority==='HIGH'?'alert-circle':'info'}" style="width:18px;height:18px;color:${cfg.iconColor};"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:${cfg.iconColor};">${n.type}</div>
+                        <div style="font-size:11px;color:#4B5B78;margin-top:3px;">${(n.created_at||'').split(' ')[1]||''}</div>
+                    </div>
+                    <span style="padding:3px 8px;border-radius:7px;font-size:10px;font-weight:800;text-transform:uppercase;color:${cfg.iconColor};background:${cfg.iconBg};border:1px solid ${cfg.border};flex-shrink:0;">${n.priority}</span>
+                </div>
+                <p style="font-size:14px;color:#E2E8F0;line-height:1.6;margin:0;">${n.message}</p>
             </div>
-            <p class="text-slate-200 leading-relaxed">${n.message}</p>
-        </div>
-    `).join("");
+        </div>`;
+    }).join('');
+
+    lucide.createIcons();
 }
 
 function toggleNotificationsDrawer() {

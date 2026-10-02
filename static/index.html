@@ -1,592 +1,651 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Herpass — Girls Hostel Outing Management System</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Herpass — Girls Hostel Outing Management</title>
+  <meta name="description" content="Real-time outing management and safety monitoring system for women's hostels.">
 
-    <!-- PWA & Mobile Web App Meta Tags -->
-    <meta name="theme-color" content="#0f172a">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Herpass">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <!-- PWA & Mobile -->
+  <meta name="theme-color" content="#080C18">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Herpass">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#fdf2f8',
-                            100: '#fce7f3',
-                            500: '#ec4899',
-                            600: '#db2777',
-                            700: '#be185d',
-                            900: '#831843',
-                        },
-                        darkBg: '#0f172a',
-                        cardBg: 'rgba(30, 41, 59, 0.7)',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        heading: ['Outfit', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Tailwind (utility helpers only) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: { sans: ['Inter','sans-serif'], heading: ['Outfit','sans-serif'] }
+      }}
+    }
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/style.css">
+
+  <style>
+    body { background: #080C18; }
+
+    /* Gradient orbs */
+    .orb { position:fixed; border-radius:50%; pointer-events:none; z-index:0; }
+    .orb-1 { width:350px;height:350px;top:-120px;left:-100px;background:radial-gradient(circle,rgba(99,102,241,0.08),transparent 70%); }
+    .orb-2 { width:400px;height:400px;bottom:-80px;right:-120px;background:radial-gradient(circle,rgba(139,92,246,0.07),transparent 70%); }
+
+    /* Header gradient line */
+    .header-line { height:2px; background:linear-gradient(90deg,#6366F1,#8B5CF6,#6366F1); opacity:0.4; }
+
+    /* Avatar gradient helpers */
+    .grad-primary { background: linear-gradient(135deg,#6366F1,#8B5CF6); }
+    .grad-emerald { background: linear-gradient(135deg,#059669,#10B981); }
+    .grad-amber   { background: linear-gradient(135deg,#D97706,#F59E0B); }
+    .grad-rose    { background: linear-gradient(135deg,#BE123C,#F43F5E); }
+    .grad-blue    { background: linear-gradient(135deg,#1D4ED8,#3B82F6); }
+
+    /* Section hidden */
+    .view-section { display:none; }
+    .view-section.active { display:block; }
+  </style>
 </head>
-<body class="h-full font-sans antialiased overflow-x-hidden bg-slate-950 text-slate-100">
+<body class="relative">
 
-    <!-- Top Navigation Header -->
-    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
-        <div class="px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
-            
-            <!-- Left Branding -->
-            <div class="flex items-center space-x-3">
-                <button id="mobileMenuBtn" class="lg:hidden text-slate-400 hover:text-white p-2">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500 to-rose-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-pink-500/20">
-                        <i data-lucide="shield-check" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <span class="font-heading font-extrabold text-xl tracking-tight bg-gradient-to-r from-pink-400 via-rose-300 to-amber-200 bg-clip-text text-transparent">HERPASS</span>
-                        <span class="hidden sm:inline-block text-xs text-slate-400 ml-2 font-medium px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">Hostel Outing Safety</span>
-                    </div>
-                </div>
-            </div>
+  <!-- Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-            <!-- Middle Realtime & Sound Status -->
-            <div class="hidden md:flex items-center space-x-4">
-                <div id="sseStatusPill" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span id="sseStatusText" class="font-medium">Live Server Sync Active</span>
-                </div>
+  <!-- ── TOP HEADER ─────────────────────────────────────────────────────── -->
+  <header class="site-header relative z-40">
+    <div class="px-4 sm:px-6 flex h-16 items-center justify-between gap-3">
 
-                <button id="soundToggleBtn" onclick="toggleAudioAlerts()" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 transition">
-                    <i id="soundIcon" data-lucide="volume-2" class="w-4 h-4 text-emerald-400"></i>
-                    <span id="soundText">Audio Alerts Enabled</span>
-                </button>
-            </div>
-
-            <!-- Right Controls: Role Switcher & Notifications -->
-            <div class="flex items-center space-x-3">
-                
-                <!-- Demo Quick Role Switcher -->
-                <div class="relative">
-                    <button id="roleDropdownBtn" onclick="toggleRoleDropdown()" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-semibold hover:bg-slate-700 transition">
-                        <span id="currentRoleBadge" class="px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30">WARDEN</span>
-                        <span id="currentUserName" class="hidden sm:inline">Dr. Sunita Deshmukh</span>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
-                    </button>
-                    
-                    <div id="roleDropdownMenu" class="hidden absolute right-0 mt-2 w-64 rounded-xl bg-slate-800 border border-slate-700 shadow-2xl z-50 p-2 space-y-1">
-                        <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Switch Role Demo</div>
-                        <button onclick="switchRole('warden')" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-700 flex items-center justify-between transition">
-                            <div>
-                                <div class="font-semibold text-white">Warden / Admin</div>
-                                <div class="text-[11px] text-slate-400">Full control, approvals & alerts</div>
-                            </div>
-                            <i data-lucide="user-check" class="w-4 h-4 text-pink-400"></i>
-                        </button>
-                        <button onclick="switchRole('guard')" class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-700 flex items-center justify-between transition">
-                            <div>
-                                <div class="font-semibold text-white">Guard Gate View</div>
-                                <div class="text-[11px] text-slate-400">Quick Mark OUT / RETURNED</div>
-                            </div>
-                            <i data-lucide="shield" class="w-4 h-4 text-emerald-400"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Install App Button -->
-                <button id="pwaInstallBtn" onclick="installPWAApp()" class="hidden flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-600 to-rose-600 text-white text-xs font-bold shadow-md hover:from-pink-500 hover:to-rose-500 transition">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Install App</span>
-                </button>
-
-                <!-- Notifications Bell -->
-                <div class="relative">
-                    <button id="notifBellBtn" onclick="toggleNotificationsDrawer()" class="relative p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">
-                        <i data-lucide="bell" class="w-5 h-5 text-slate-300"></i>
-                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white font-bold text-[10px] flex items-center justify-center rounded-full animate-bounce">0</span>
-                    </button>
-                </div>
-
-            </div>
+      <!-- Branding -->
+      <div class="flex items-center gap-3">
+        <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl grad-primary flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+            <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+          </div>
+          <div>
+            <div class="font-heading font-black text-xl tracking-wide" style="background:linear-gradient(90deg,#818CF8,#C4B5FD,#FDE68A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">HERPASS</div>
+            <div class="hidden sm:block text-[10px] text-slate-400 font-semibold tracking-wider">HOSTEL OUTING SAFETY</div>
+          </div>
         </div>
-    </header>
+      </div>
 
-    <!-- Main Workspace Container -->
-    <div class="flex h-[calc(100vh-4rem)] overflow-hidden">
-        
-        <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col justify-between hidden lg:flex">
-            <div class="p-4 space-y-6 overflow-y-auto">
-                
-                <!-- Quick User Profile Card -->
-                <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-800 flex items-center space-x-3">
-                    <div id="userAvatar" class="w-10 h-10 rounded-full bg-pink-600 flex items-center justify-center font-bold text-lg text-white">
-                        W
-                    </div>
-                    <div class="truncate">
-                        <div id="sidebarUserName" class="font-semibold text-sm truncate text-white">Dr. Sunita Deshmukh</div>
-                        <div id="sidebarUserRole" class="text-xs text-pink-400 font-medium">Chief Warden</div>
-                    </div>
-                </div>
+      <!-- Centre: SSE status -->
+      <div class="hidden md:flex items-center gap-3">
+        <div id="sseStatusPill" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-400">
+          <span class="live-dot"></span>
+          <span id="sseStatusText" class="font-semibold">Live Server Sync</span>
+        </div>
+        <button id="soundToggleBtn" onclick="toggleAudioAlerts()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-400 transition">
+          <i id="soundIcon" data-lucide="volume-2" class="w-4 h-4 text-emerald-400"></i>
+          <span id="soundText">Audio On</span>
+        </button>
+      </div>
 
-                <!-- Nav Menu Links -->
-                <nav class="space-y-1">
-                    <button onclick="navigateTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-pink-400 bg-pink-500/10 border border-pink-500/20">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                        <span>Dashboard</span>
-                    </button>
+      <!-- Right Controls -->
+      <div class="flex items-center gap-2">
+        <!-- Role switcher -->
+        <div class="relative">
+          <button id="roleDropdownBtn" onclick="toggleRoleDropdown()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold hover:bg-slate-800 transition">
+            <span id="currentRoleBadge" class="px-2 py-0.5 rounded-md text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 font-bold">WARDEN</span>
+            <span id="currentUserName" class="hidden sm:inline text-slate-300">Dr. Sunita</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
+          </button>
+          <div id="roleDropdownMenu" class="hidden absolute right-0 mt-2 w-64 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl z-50 p-2 gap-1 flex flex-col">
+            <div class="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Switch Demo Role</div>
+            <button onclick="switchRole('warden')" class="w-full text-left px-3 py-3 text-sm rounded-xl hover:bg-slate-800 flex items-center justify-between gap-3 transition">
+              <div>
+                <div class="font-bold text-white text-sm">Warden / Admin</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Full control, approvals & alerts</div>
+              </div>
+              <i data-lucide="user-check" class="w-4 h-4 text-indigo-400 flex-shrink-0"></i>
+            </button>
+            <button onclick="switchRole('guard')" class="w-full text-left px-3 py-3 text-sm rounded-xl hover:bg-slate-800 flex items-center justify-between gap-3 transition">
+              <div>
+                <div class="font-bold text-white text-sm">Guard Gate View</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Quick Mark OUT / RETURNED</div>
+              </div>
+              <i data-lucide="shield" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+            </button>
+          </div>
+        </div>
 
-                    <button onclick="navigateTab('guard-gate')" id="nav-guard-gate" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/70">
-                        <i data-lucide="door-open" class="w-5 h-5 text-emerald-400"></i>
-                        <span>Guard Gate Desk</span>
-                        <span id="gateBadgeCount" class="ml-auto bg-emerald-500/20 text-emerald-300 text-xs px-2 py-0.5 rounded-full border border-emerald-500/30">Active</span>
-                    </button>
+        <!-- Install PWA -->
+        <button id="pwaInstallBtn" onclick="installPWAApp()" class="hidden items-center gap-1.5 px-3 py-2 rounded-xl grad-primary text-white text-xs font-bold shadow-md transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Install</span>
+        </button>
 
-                    <button onclick="navigateTab('students')" id="nav-students" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/70">
-                        <i data-lucide="users" class="w-5 h-5"></i>
-                        <span>Students</span>
-                    </button>
-                </nav>
-            </div>
-
-            <!-- Sidebar Bottom Action -->
-            <div class="p-4 border-t border-slate-800">
-                <button onclick="openCreateOutingModal()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-semibold shadow-lg shadow-pink-600/30 flex items-center justify-center space-x-2 transition transform active:scale-95">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    <span>New Outing Entry</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Dynamic Main Content Area -->
-        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
-
-            <!-- VIEW 1: MAIN DASHBOARD -->
-            <section id="view-dashboard" class="space-y-6">
-                
-                <!-- Page Title Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 class="font-heading font-extrabold text-2xl text-white">Outing Management Overview</h1>
-                        <p class="text-xs text-slate-400 mt-1">Real-time status tracking of all hostel outings and return deadlines.</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <button onclick="fetchDashboardData()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="openCreateOutingModal()" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs shadow-md transition flex items-center space-x-2">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                            <span>Create Outing</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- KPI Cards Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-                    
-                    <!-- Today's Outings -->
-                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition shadow-lg">
-                        <div class="flex items-center justify-between text-slate-400 mb-2">
-                            <span class="text-xs font-semibold uppercase">Today's Total</span>
-                            <i data-lucide="calendar" class="w-4 h-4 text-blue-400"></i>
-                        </div>
-                        <div id="stat-todays-outings" class="font-heading font-extrabold text-2xl text-white">5</div>
-                        <div class="text-[11px] text-slate-500 mt-1">Approved for today</div>
-                    </div>
-
-                    <!-- Currently Outside -->
-                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-amber-500/30 hover:border-amber-500/50 transition shadow-lg bg-amber-500/5">
-                        <div class="flex items-center justify-between text-amber-400 mb-2">
-                            <span class="text-xs font-semibold uppercase">Currently Out</span>
-                            <i data-lucide="arrow-right-left" class="w-4 h-4"></i>
-                        </div>
-                        <div id="stat-currently-outside" class="font-heading font-extrabold text-2xl text-amber-300">1</div>
-                        <div class="text-[11px] text-amber-400/70 mt-1">🟠 Outside Hostel</div>
-                    </div>
-
-                    <!-- Returned Today -->
-                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-500/50 transition shadow-lg bg-emerald-500/5">
-                        <div class="flex items-center justify-between text-emerald-400 mb-2">
-                            <span class="text-xs font-semibold uppercase">Returned</span>
-                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                        </div>
-                        <div id="stat-returned-today" class="font-heading font-extrabold text-2xl text-emerald-300">1</div>
-                        <div class="text-[11px] text-emerald-400/70 mt-1">🟢 Safe back in hostel</div>
-                    </div>
-
-                </div>
-
-                <!-- Filter & Search Controls -->
-                <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="relative w-full md:w-80">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                        <input type="text" id="dashboardSearchInput" onkeyup="filterOutings()" placeholder="Search by student, room, ID..." class="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500">
-                    </div>
-
-                    <div class="flex items-center space-x-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                        <button onclick="setFilterStatus('ALL')" class="status-filter-btn px-3 py-1.5 rounded-lg bg-pink-600 text-white text-xs font-semibold">ALL</button>
-                        <button onclick="setFilterStatus('OUT')" class="status-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold border border-slate-700">🟠 CURRENTLY OUT</button>
-                        <button onclick="setFilterStatus('RETURNED')" class="status-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-semibold border border-slate-700">🟢 RETURNED</button>
-                    </div>
-                </div>
-
-                <!-- Live Outings Table -->
-                <div class="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xl">
-                    <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-                        <h2 class="font-heading font-bold text-base text-white flex items-center space-x-2">
-                            <span>Live Outing Status Register</span>
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        </h2>
-                        <span class="text-xs text-slate-400">Auto-refreshes on gate events</span>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-800/60 text-slate-400 text-[11px] uppercase tracking-wider font-semibold border-b border-slate-800">
-                                    <th class="py-3 px-4">Student Name</th>
-                                    <th class="py-3 px-4">Room</th>
-                                    <th class="py-3 px-4">Destination</th>
-                                    <th class="py-3 px-4">Out Time</th>
-                                    <th class="py-3 px-4">Return Deadline</th>
-                                    <th class="py-3 px-4 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="outingsTableBody" class="divide-y divide-slate-800 text-xs">
-                                <!-- Dynamic Outing Rows injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </section>
-
-            <!-- VIEW 2: GUARD GATE DESK (OPTIMIZED FOR MOBILE & FAST GATE USE) -->
-            <section id="view-guard-gate" class="hidden space-y-6">
-                <div class="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/80 to-slate-900 border border-emerald-500/30">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold shadow-lg">
-                                <i data-lucide="shield-check" class="w-7 h-7"></i>
-                            </div>
-                            <div>
-                                <h1 class="font-heading font-extrabold text-xl text-white">Hostel Gate Verification Desk</h1>
-                                <p class="text-xs text-emerald-300">Quick Gate Controls for Guards — Mark Departure & Return</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Gate Quick Search -->
-                        <div class="relative w-full sm:w-64">
-                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                            <input type="text" id="gateSearchInput" onkeyup="renderGateCards()" placeholder="Quick Room/Student search..." class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gate Two-Column Mobile Cards Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
-                    <!-- LEFT COLUMN: UPCOMING & STARTING NOW (MARK OUT) -->
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <h2 class="font-heading font-bold text-base text-blue-400 flex items-center space-x-2">
-                                <i data-lucide="log-out" class="w-5 h-5"></i>
-                                <span>Pending Departure (Mark OUT)</span>
-                            </h2>
-                            <span id="gateUpcomingCount" class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold">2</span>
-                        </div>
-                        <div id="gateUpcomingList" class="space-y-3">
-                            <!-- Gate Upcoming Cards -->
-                        </div>
-                    </div>
-
-                    <!-- RIGHT COLUMN: CURRENTLY OUTSIDE (MARK RETURNED) -->
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <h2 class="font-heading font-bold text-base text-amber-400 flex items-center space-x-2">
-                                <i data-lucide="log-in" class="w-5 h-5"></i>
-                                <span>Currently Outside (Mark RETURNED)</span>
-                            </h2>
-                            <span id="gateOutsideCount" class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold">1</span>
-                        </div>
-                        <div id="gateOutsideList" class="space-y-3">
-                            <!-- Gate Outside Cards -->
-                        </div>
-                    </div>
-
-                </div>
-            </section>
-
-
-            <!-- VIEW 5: STUDENTS MANAGEMENT -->
-            <section id="view-students" class="hidden space-y-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="font-heading font-extrabold text-2xl text-white">Student Profiles</h1>
-                        <p class="text-xs text-slate-400">Hostel residents directory & guardian contacts.</p>
-                    </div>
-                    <button onclick="openCreateStudentModal()" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs shadow-md">
-                        + Add Student
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="studentsGrid">
-                    <!-- Dynamic Student Cards -->
-                </div>
-            </section>
-
-        </main>
+        <!-- Notifications Bell -->
+        <button onclick="toggleNotificationsDrawer()" class="relative p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 transition">
+          <i data-lucide="bell" class="w-5 h-5 text-slate-300"></i>
+          <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white font-bold text-[10px] flex items-center justify-center rounded-full animate-bounce">0</span>
+        </button>
+      </div>
     </div>
+    <div class="header-line"></div>
+  </header>
 
-    <!-- Native Mobile Bottom Navigation Bar -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-3 py-2 flex items-center justify-around text-xs shadow-2xl">
-        <button onclick="navigateTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-item flex flex-col items-center space-y-1 text-pink-400 font-semibold transition">
+  <!-- ── MAIN WORKSPACE ──────────────────────────────────────────────────── -->
+  <div class="flex" style="height:calc(100vh - 66px); position:relative; z-index:1;">
+
+    <!-- ── SIDEBAR (Desktop) ───────────────────────────────────────────── -->
+    <aside id="sidebar" class="hidden lg:flex w-64 flex-shrink-0 flex-col border-r" style="background:rgba(8,12,24,0.95);border-color:#1E2D50;">
+      <div class="p-4 flex flex-col gap-5 overflow-y-auto flex-1">
+
+        <!-- User card -->
+        <div class="flex items-center gap-3 p-3 rounded-xl" style="background:rgba(15,22,41,0.8);border:1px solid #1E2D50;">
+          <div id="userAvatar" class="avatar grad-primary">W</div>
+          <div class="truncate flex-1">
+            <div id="sidebarUserName" class="font-bold text-sm text-white truncate">Dr. Sunita Deshmukh</div>
+            <div id="sidebarUserRole" class="text-xs font-semibold" style="color:#818CF8;">Chief Warden</div>
+          </div>
+        </div>
+
+        <!-- Nav links -->
+        <nav class="flex flex-col gap-1">
+          <button onclick="navigateTab('dashboard')" id="nav-dashboard" class="nav-item active">
             <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-            <span class="text-[10px]">Dashboard</span>
-        </button>
-        <button onclick="navigateTab('guard-gate')" id="mobile-nav-guard-gate" class="mobile-nav-item flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200 transition">
-            <i data-lucide="door-open" class="w-5 h-5 text-emerald-400"></i>
-            <span class="text-[10px]">Gate Desk</span>
-        </button>
-        <button onclick="openCreateOutingModal()" class="flex flex-col items-center space-y-1 text-white group">
-            <div class="w-10 h-10 -mt-5 rounded-full bg-gradient-to-r from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-500/40 border-2 border-slate-900 group-active:scale-90 transition">
-                <i data-lucide="plus" class="w-6 h-6 text-white"></i>
-            </div>
-            <span class="text-[10px] text-pink-400 font-bold">New Outing</span>
-        </button>
-        <button onclick="navigateTab('students')" id="mobile-nav-students" class="mobile-nav-item flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200 transition">
+            <span>Dashboard</span>
+          </button>
+          <button onclick="navigateTab('guard-gate')" id="nav-guard-gate" class="nav-item">
+            <i data-lucide="door-open" class="w-5 h-5" style="color:#10B981;"></i>
+            <span>Gate Desk</span>
+            <span id="gateBadgeCount" class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(16,185,129,0.15);color:#10B981;border:1px solid rgba(16,185,129,0.3);">Active</span>
+          </button>
+          <button onclick="navigateTab('students')" id="nav-students" class="nav-item">
             <i data-lucide="users" class="w-5 h-5"></i>
-            <span class="text-[10px]">Students</span>
+            <span>Students</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Sidebar bottom -->
+      <div class="p-4" style="border-top:1px solid #1E2D50;">
+        <button onclick="openCreateOutingModal()" class="btn-primary w-full">
+          <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          New Outing Entry
         </button>
-        <button onclick="toggleNotificationsDrawer()" class="mobile-nav-item flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200 transition relative">
-            <i data-lucide="bell" class="w-5 h-5"></i>
-            <span class="text-[10px]">Alerts</span>
-        </button>
-    </nav>
+      </div>
+    </aside>
 
+    <!-- ── MAIN CONTENT ──────────────────────────────────────────────────── -->
+    <main class="flex-1 overflow-y-auto" style="padding:20px 16px;padding-bottom:100px;">
 
-    <!-- MODAL 1: CREATE NEW OUTING -->
-    <div id="createOutingModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div class="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 class="font-heading font-bold text-lg text-white flex items-center space-x-2">
-                    <i data-lucide="calendar-plus" class="w-5 h-5 text-pink-500"></i>
-                    <span>Create New Outing Entry</span>
-                </h3>
-                <button onclick="closeModal('createOutingModal')" class="text-slate-400 hover:text-white p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+      <!-- ── VIEW: DASHBOARD ─────────────────────────────────────────────── -->
+      <section id="view-dashboard" class="view-section active" style="max-width:960px;margin:0 auto;">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">
+              <span class="title-icon"><i data-lucide="layout-dashboard" class="w-4 h-4"></i></span>
+              Overview
+            </h1>
+            <div class="flex items-center gap-2 mt-1 ml-10">
+              <span class="live-dot"></span>
+              <span style="font-size:12px;color:#94A3B8;">Live · auto-refreshes</span>
             </div>
-
-            <form id="createOutingForm" onsubmit="handleCreateOuting(event)" class="space-y-4 text-xs">
-                <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Select Student</label>
-                    <select id="formStudentId" required class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                        <!-- Student options -->
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Destination</label>
-                    <input type="text" id="formDestination" required placeholder="e.g. City Center Market" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Outing Date</label>
-                    <input type="date" id="formOutingDate" required class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Scheduled Departure Time</label>
-                        <input type="time" id="formDepartureTime" required class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Return Deadline (Fixed 6:00 PM)</label>
-                        <input type="time" id="formReturnDeadline" value="18:00" required class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-rose-400 font-bold focus:border-pink-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Remarks (Optional)</label>
-                    <textarea id="formRemarks" rows="2" placeholder="e.g. Parent permission verified..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none"></textarea>
-                </div>
-
-                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-800">
-                    <button type="button" onclick="closeModal('createOutingModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold shadow-lg shadow-pink-600/30">Save & Issue Outing</button>
-                </div>
-            </form>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="fetchDashboardData()" class="btn-ghost" style="padding:10px 14px;font-size:13px;">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">Refresh</span>
+            </button>
+            <button onclick="openCreateOutingModal()" class="btn-primary" style="padding:10px 18px;font-size:13px;">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              New Outing
+            </button>
+          </div>
         </div>
-    </div>
 
-    <!-- MODAL 2: RESOLVE OVERDUE CASE -->
-    <div id="resolveOverdueModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 class="font-heading font-bold text-lg text-white flex items-center space-x-2">
-                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
-                    <span>Resolve Overdue Case</span>
-                </h3>
-                <button onclick="closeModal('resolveOverdueModal')" class="text-slate-400 hover:text-white p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <form id="resolveOverdueForm" onsubmit="handleResolveOverdue(event)" class="space-y-4 text-xs">
-                <input type="hidden" id="resolveOutingId">
-                <div class="p-4 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1.5 text-slate-300">
-                    <p class="text-sm font-semibold text-white flex items-center space-x-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                        <span>Confirm Overdue Case Resolution?</span>
-                    </p>
-                    <p class="text-xs text-slate-400 leading-relaxed">This will clear the overdue alert and confirm that this case has been reviewed and resolved by the Warden.</p>
-                </div>
-
-                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
-                    <button type="button" onclick="closeModal('resolveOverdueModal')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg">Confirm Resolution</button>
-                </div>
-            </form>
+        <!-- Overdue Banner -->
+        <div id="overdueBanner" class="overdue-banner hidden" onclick="setFilterStatus('OVERDUE')">
+          <div style="width:38px;height:38px;border-radius:10px;background:rgba(244,63,94,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i data-lucide="alert-triangle" class="w-5 h-5" style="color:#F43F5E;"></i>
+          </div>
+          <span id="overdueBannerText" style="font-size:14px;font-weight:700;color:#F43F5E;flex:1;">Students overdue — tap to review</span>
+          <i data-lucide="chevron-right" class="w-5 h-5" style="color:#F43F5E;flex-shrink:0;"></i>
         </div>
-    </div>
 
-    <!-- MODAL 3: EXTEND DEADLINE -->
-    <div id="extendDeadlineModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 class="font-heading font-bold text-lg text-white flex items-center space-x-2">
-                    <i data-lucide="clock" class="w-5 h-5 text-blue-400"></i>
-                    <span>Extend Outing Return Deadline</span>
-                </h3>
-                <button onclick="closeModal('extendDeadlineModal')" class="text-slate-400 hover:text-white p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+        <!-- KPI Stats Grid -->
+        <div class="grid grid-cols-3 gap-3 mb-5">
+          <div class="stat-card" style="border-color:rgba(99,102,241,0.3);">
+            <div class="stat-card-glow" style="background:linear-gradient(180deg,rgba(99,102,241,0.15),transparent);"></div>
+            <div>
+              <span class="stat-card-icon">📅</span>
+              <div class="stat-card-label">Today's Outings</div>
             </div>
-
-            <form id="extendDeadlineForm" onsubmit="handleExtendDeadline(event)" class="space-y-4 text-xs">
-                <input type="hidden" id="extendOutingId">
-                <div>
-                    <label class="block text-slate-400 font-semibold mb-1">New Return Deadline Time</label>
-                    <input type="time" id="extendNewTime" required class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Reason for Extension</label>
-                    <input type="text" id="extendReason" required placeholder="e.g. University lab session extended" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-blue-500 focus:outline-none">
-                </div>
-
-                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-800">
-                    <button type="button" onclick="closeModal('extendDeadlineModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg">Save Extension</button>
-                </div>
-            </form>
+            <div id="stat-todays-outings" class="stat-card-value" style="color:#818CF8;">—</div>
+          </div>
+          <div class="stat-card" style="border-color:rgba(245,158,11,0.3);">
+            <div class="stat-card-glow" style="background:linear-gradient(180deg,rgba(245,158,11,0.15),transparent);"></div>
+            <div>
+              <span class="stat-card-icon">🟠</span>
+              <div class="stat-card-label">Currently Out</div>
+            </div>
+            <div id="stat-currently-outside" class="stat-card-value" style="color:#F59E0B;">—</div>
+          </div>
+          <div class="stat-card" style="border-color:rgba(16,185,129,0.3);">
+            <div class="stat-card-glow" style="background:linear-gradient(180deg,rgba(16,185,129,0.15),transparent);"></div>
+            <div>
+              <span class="stat-card-icon">✅</span>
+              <div class="stat-card-label">Returned</div>
+            </div>
+            <div id="stat-returned-today" class="stat-card-value" style="color:#10B981;">—</div>
+          </div>
         </div>
-    </div>
 
-    <!-- MODAL 4: ADD NEW STUDENT -->
-    <div id="createStudentModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div class="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 class="font-heading font-bold text-lg text-white flex items-center space-x-2">
-                    <i data-lucide="user-plus" class="w-5 h-5 text-pink-500"></i>
-                    <span>Add New Student Resident</span>
-                </h3>
-                <button onclick="closeModal('createStudentModal')" class="text-slate-400 hover:text-white p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <form id="createStudentForm" onsubmit="handleCreateStudent(event)" class="space-y-4 text-xs">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Full Name</label>
-                        <input type="text" id="newStudentName" required placeholder="e.g. Pooja Sharma" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Room Number</label>
-                        <input type="text" id="newStudentRoom" required placeholder="e.g. 205" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Student Phone</label>
-                        <input type="tel" id="newStudentPhone" required placeholder="+91 98765 00000" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Course</label>
-                        <input type="text" id="newStudentCourse" required placeholder="e.g. B.Tech CSE" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Year / Semester</label>
-                        <input type="text" id="newStudentYear" required placeholder="e.g. 2nd Year" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-slate-400 font-semibold mb-1">Guardian Name & Contact</label>
-                        <input type="text" id="newStudentGuardian" required placeholder="e.g. Mr. Sharma (+91 98111 00000)" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-pink-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-800">
-                    <button type="button" onclick="closeModal('createStudentModal')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold shadow-lg shadow-pink-600/30">Save Student</button>
-                </div>
-            </form>
+        <!-- Search & Filters -->
+        <div class="search-bar mb-3">
+          <i data-lucide="search" class="w-4 h-4" style="color:#4B5B78;flex-shrink:0;"></i>
+          <input type="text" id="dashboardSearchInput" onkeyup="filterOutings()" placeholder="Search student, room, destination...">
+          <button onclick="document.getElementById('dashboardSearchInput').value='';filterOutings();" style="color:#4B5B78;background:none;border:none;cursor:pointer;padding:4px;">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
         </div>
-    </div>
 
-    <!-- SLIDE-OUT NOTIFICATIONS DRAWER -->
-    <div id="notificationsDrawer" class="hidden fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-slate-900 border-l border-slate-800 shadow-2xl p-6 space-y-4 flex flex-col justify-between">
-        <div>
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 class="font-heading font-bold text-lg text-white flex items-center space-x-2">
-                    <i data-lucide="bell" class="w-5 h-5 text-pink-400"></i>
-                    <span>Notifications Center</span>
-                </h3>
-                <button onclick="toggleNotificationsDrawer()" class="text-slate-400 hover:text-white p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <div id="notificationsList" class="mt-4 space-y-3 overflow-y-auto max-h-[70vh]">
-                <!-- Dynamic Notification items -->
-            </div>
+        <div class="flex flex-wrap gap-2 mb-5">
+          <button onclick="setFilterStatus('ALL')" class="filter-chip active" id="chip-ALL">ALL</button>
+          <button onclick="setFilterStatus('OUT')" class="filter-chip" id="chip-OUT">🟠 OUT</button>
+          <button onclick="setFilterStatus('RETURNED')" class="filter-chip" id="chip-RETURNED">🟢 RETURNED</button>
+          <button onclick="setFilterStatus('UPCOMING')" class="filter-chip" id="chip-UPCOMING">🔵 UPCOMING</button>
+          <button onclick="setFilterStatus('OVERDUE')" class="filter-chip" id="chip-OVERDUE">🔴 OVERDUE</button>
         </div>
-    </div>
 
-    <!-- MAIN JAVASCRIPT APPLICATION LOGIC -->
-    <script src="/static/app.js?v=7"></script>
+        <!-- Live register label -->
+        <div class="flex items-center gap-2 mb-3">
+          <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#4B5B78;">Live Register</span>
+          <span id="registerCount" style="background:rgba(99,102,241,0.2);color:#818CF8;border:1px solid rgba(99,102,241,0.3);font-size:11px;font-weight:800;padding:2px 9px;border-radius:10px;">0</span>
+        </div>
+
+        <!-- Outings List (mobile cards) & Table (desktop) -->
+        <div id="outingsCardList" class="md:hidden flex flex-col gap-0"></div>
+        <div class="hidden md:block rounded-2xl overflow-hidden" style="background:var(--bg-card);border:1.5px solid var(--border);">
+          <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
+            <h2 class="font-bold text-white flex items-center gap-2" style="font-size:15px;">
+              Live Outing Status Register
+              <span class="live-dot"></span>
+            </h2>
+            <span style="font-size:12px;color:#94A3B8;">Auto-refreshes on gate events</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Room</th>
+                  <th>Destination</th>
+                  <th>Departs</th>
+                  <th>Return By</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="outingsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── VIEW: GATE DESK ─────────────────────────────────────────────── -->
+      <section id="view-guard-gate" class="view-section" style="max-width:960px;margin:0 auto;">
+
+        <!-- Gate Banner -->
+        <div class="flex items-center gap-4 p-4 rounded-2xl mb-5" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.04));border:1.5px solid rgba(16,185,129,0.25);">
+          <div style="width:52px;height:52px;border-radius:14px;flex-shrink:0;" class="grad-emerald flex items-center justify-center shadow-lg">
+            <i data-lucide="shield-check" class="w-7 h-7 text-white"></i>
+          </div>
+          <div class="flex-1">
+            <div class="font-black text-white text-lg">Gate Verification Desk</div>
+            <div style="font-size:12px;color:#10B981;margin-top:2px;">Mark Departure & Return in real-time</div>
+          </div>
+          <div class="flex gap-2">
+            <div class="text-center px-3 py-2 rounded-xl" style="background:var(--bg-card);border:1px solid rgba(59,130,246,0.35);">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#4B5B78;">Pending</div>
+              <div id="gateUpcomingCount" style="font-size:22px;font-weight:900;color:#3B82F6;line-height:1.1;">0</div>
+            </div>
+            <div class="text-center px-3 py-2 rounded-xl" style="background:var(--bg-card);border:1px solid rgba(245,158,11,0.35);">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#4B5B78;">Outside</div>
+              <div id="gateOutsideCount" style="font-size:22px;font-weight:900;color:#F59E0B;line-height:1.1;">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gate Search -->
+        <div class="search-bar mb-5">
+          <i data-lucide="search" class="w-4 h-4" style="color:#4B5B78;flex-shrink:0;"></i>
+          <input type="text" id="gateSearchInput" onkeyup="renderGateCards()" placeholder="Quick room / student search...">
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Pending Departure -->
+          <div>
+            <div class="section-header" style="border-color:rgba(59,130,246,0.3);">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="log-out" class="w-5 h-5" style="color:#3B82F6;"></i>
+              </div>
+              <div class="flex-1">
+                <div style="font-size:14px;font-weight:800;color:#3B82F6;">Pending Departure</div>
+                <div style="font-size:11px;color:#4B5B78;margin-top:1px;">Tap MARK OUT to confirm</div>
+              </div>
+              <span id="gateUpcomingBadge" style="padding:4px 12px;border-radius:20px;font-size:14px;font-weight:900;color:#3B82F6;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.35);">0</span>
+            </div>
+            <div id="gateUpcomingList"></div>
+          </div>
+
+          <!-- Currently Outside -->
+          <div>
+            <div class="section-header" style="border-color:rgba(245,158,11,0.3);">
+              <div style="width:38px;height:38px;border-radius:11px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="log-in" class="w-5 h-5" style="color:#F59E0B;"></i>
+              </div>
+              <div class="flex-1">
+                <div style="font-size:14px;font-weight:800;color:#F59E0B;">Currently Outside</div>
+                <div style="font-size:11px;color:#4B5B78;margin-top:1px;">Tap RETURNED when back</div>
+              </div>
+              <span id="gateOutsideBadge" style="padding:4px 12px;border-radius:20px;font-size:14px;font-weight:900;color:#F59E0B;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);">0</span>
+            </div>
+            <div id="gateOutsideList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── VIEW: STUDENTS ──────────────────────────────────────────────── -->
+      <section id="view-students" class="view-section" style="max-width:960px;margin:0 auto;">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">
+              <span class="title-icon"><i data-lucide="users" class="w-4 h-4"></i></span>
+              Students
+            </h1>
+            <div style="font-size:12px;color:#94A3B8;margin-top:4px;margin-left:40px;">Hostel residents & guardian contacts</div>
+          </div>
+          <button onclick="openCreateStudentModal()" class="btn-primary" style="padding:10px 18px;font-size:13px;">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            Add Student
+          </button>
+        </div>
+
+        <!-- Students Stats Strip -->
+        <div class="flex rounded-2xl overflow-hidden mb-5" style="background:var(--bg-card);border:1.5px solid var(--border);">
+          <div class="flex-1 flex flex-col items-center gap-1 py-4">
+            <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#4B5B78;">Total</span>
+            <span id="stat-total-students" style="font-size:26px;font-weight:900;color:#818CF8;">—</span>
+          </div>
+          <div style="width:1px;background:var(--border);"></div>
+          <div class="flex-1 flex flex-col items-center gap-1 py-4">
+            <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#4B5B78;">Outside</span>
+            <span id="stat-outside-count" style="font-size:26px;font-weight:900;color:#F59E0B;">—</span>
+          </div>
+          <div style="width:1px;background:var(--border);"></div>
+          <div class="flex-1 flex flex-col items-center gap-1 py-4">
+            <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#4B5B78;">Present</span>
+            <span id="stat-present-count" style="font-size:26px;font-weight:900;color:#10B981;">—</span>
+          </div>
+        </div>
+
+        <!-- Student search -->
+        <div class="search-bar mb-4">
+          <i data-lucide="search" class="w-4 h-4" style="color:#4B5B78;flex-shrink:0;"></i>
+          <input type="text" id="studentSearchInput" onkeyup="renderStudentsGrid()" placeholder="Search name, room, course...">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="studentsGrid"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── MOBILE BOTTOM NAV ───────────────────────────────────────────────── -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bottom-nav flex items-center justify-around px-2" style="background:rgba(8,12,24,0.97);backdrop-filter:blur(20px);border-top:1px solid #1E2D50;box-shadow:0 -4px 20px rgba(0,0,0,0.4);">
+    <button onclick="navigateTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-btn active py-3">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span>Dashboard</span>
+    </button>
+    <button onclick="navigateTab('guard-gate')" id="mobile-nav-guard-gate" class="mobile-nav-btn py-3">
+      <i data-lucide="door-open" class="w-5 h-5" style="color:#10B981;"></i>
+      <span>Gate</span>
+    </button>
+    <!-- FAB -->
+    <button onclick="openCreateOutingModal()" class="flex flex-col items-center gap-1 relative py-3">
+      <div class="w-12 h-12 -mt-6 rounded-full grad-primary flex items-center justify-center shadow-xl" style="border:3px solid #080C18;box-shadow:0 4px 18px rgba(99,102,241,0.5);">
+        <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+      </div>
+      <span style="font-size:10px;font-weight:700;color:#818CF8;margin-top:2px;">New</span>
+    </button>
+    <button onclick="navigateTab('students')" id="mobile-nav-students" class="mobile-nav-btn py-3">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span>Students</span>
+    </button>
+    <button onclick="toggleNotificationsDrawer()" class="mobile-nav-btn py-3 relative">
+      <i data-lucide="bell" class="w-5 h-5"></i>
+      <span id="mobileNotifDot" class="hidden absolute top-2 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+      <span>Alerts</span>
+    </button>
+  </nav>
+
+  <!-- ── MODAL: CREATE OUTING ───────────────────────────────────────────── -->
+  <div id="createOutingModal" class="hidden fixed inset-0 z-50">
+    <div class="modal-overlay" onclick="closeModal('createOutingModal')">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <span class="modal-drag-indicator"></span>
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="flex items-center gap-3 font-black text-white text-lg">
+            <span style="width:38px;height:38px;border-radius:11px;flex-shrink:0;" class="grad-primary flex items-center justify-center">
+              <i data-lucide="calendar-plus" class="w-5 h-5 text-white"></i>
+            </span>
+            New Outing Entry
+          </h3>
+          <button onclick="closeModal('createOutingModal')" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="createOutingForm" onsubmit="handleCreateOuting(event)" class="flex flex-col gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Select Student</label>
+            <select id="formStudentId" required class="form-input"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Destination</label>
+            <input type="text" id="formDestination" required placeholder="e.g. City Center Market" class="form-input">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Outing Date</label>
+            <input type="date" id="formOutingDate" required class="form-input">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Departure Time</label>
+              <input type="time" id="formDepartureTime" required class="form-input">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#F43F5E;">Return Deadline</label>
+              <input type="time" id="formReturnDeadline" value="18:00" required class="form-input" style="color:#F43F5E;border-color:rgba(244,63,94,0.4);">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Remarks (Optional)</label>
+            <textarea id="formRemarks" rows="2" placeholder="e.g. Parent permission verified..." class="form-input"></textarea>
+          </div>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeModal('createOutingModal')" class="btn-ghost flex-1">Cancel</button>
+            <button type="submit" class="btn-primary flex-1">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              Save & Issue
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: RESOLVE OVERDUE ─────────────────────────────────────────── -->
+  <div id="resolveOverdueModal" class="hidden fixed inset-0 z-50">
+    <div class="modal-overlay" onclick="closeModal('resolveOverdueModal')">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <span class="modal-drag-indicator"></span>
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="flex items-center gap-3 font-black text-white text-lg">
+            <span style="width:38px;height:38px;border-radius:11px;flex-shrink:0;background:linear-gradient(135deg,#059669,#10B981);" class="flex items-center justify-center">
+              <i data-lucide="check-circle" class="w-5 h-5 text-white"></i>
+            </span>
+            Resolve Overdue Case
+          </h3>
+          <button onclick="closeModal('resolveOverdueModal')" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="resolveOverdueForm" onsubmit="handleResolveOverdue(event)" class="flex flex-col gap-4">
+          <input type="hidden" id="resolveOutingId">
+          <div class="p-4 rounded-xl" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);">
+            <p class="font-bold text-white mb-1 flex items-center gap-2">
+              <span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block;"></span>
+              Confirm Overdue Case Resolution?
+            </p>
+            <p style="font-size:13px;color:#94A3B8;line-height:1.6;">This will clear the overdue alert and confirm the case has been reviewed and resolved by the Warden.</p>
+          </div>
+          <div class="flex gap-3">
+            <button type="button" onclick="closeModal('resolveOverdueModal')" class="btn-ghost flex-1">Cancel</button>
+            <button type="submit" class="btn-primary btn-success flex-1">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              Confirm Resolution
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: EXTEND DEADLINE ─────────────────────────────────────────── -->
+  <div id="extendDeadlineModal" class="hidden fixed inset-0 z-50">
+    <div class="modal-overlay" onclick="closeModal('extendDeadlineModal')">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <span class="modal-drag-indicator"></span>
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="flex items-center gap-3 font-black text-white text-lg">
+            <span style="width:38px;height:38px;border-radius:11px;flex-shrink:0;background:linear-gradient(135deg,#1D4ED8,#3B82F6);" class="flex items-center justify-center">
+              <i data-lucide="clock" class="w-5 h-5 text-white"></i>
+            </span>
+            Extend Return Deadline
+          </h3>
+          <button onclick="closeModal('extendDeadlineModal')" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="extendDeadlineForm" onsubmit="handleExtendDeadline(event)" class="flex flex-col gap-4">
+          <input type="hidden" id="extendOutingId">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">New Return Deadline Time</label>
+            <input type="time" id="extendNewTime" required class="form-input">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Reason for Extension</label>
+            <input type="text" id="extendReason" required placeholder="e.g. University lab session extended" class="form-input">
+          </div>
+          <div class="flex gap-3">
+            <button type="button" onclick="closeModal('extendDeadlineModal')" class="btn-ghost flex-1">Cancel</button>
+            <button type="submit" class="btn-primary btn-blue flex-1">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              Save Extension
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: ADD STUDENT ─────────────────────────────────────────────── -->
+  <div id="createStudentModal" class="hidden fixed inset-0 z-50">
+    <div class="modal-overlay" onclick="closeModal('createStudentModal')">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <span class="modal-drag-indicator"></span>
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="flex items-center gap-3 font-black text-white text-lg">
+            <span style="width:38px;height:38px;border-radius:11px;flex-shrink:0;" class="grad-primary flex items-center justify-center">
+              <i data-lucide="user-plus" class="w-5 h-5 text-white"></i>
+            </span>
+            Add New Student
+          </h3>
+          <button onclick="closeModal('createStudentModal')" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="createStudentForm" onsubmit="handleCreateStudent(event)" class="flex flex-col gap-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Full Name</label>
+              <input type="text" id="newStudentName" required placeholder="e.g. Pooja Sharma" class="form-input">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Room Number</label>
+              <input type="text" id="newStudentRoom" required placeholder="e.g. 205" class="form-input">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Phone</label>
+              <input type="tel" id="newStudentPhone" required placeholder="+91 98765 00000" class="form-input">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Course</label>
+              <input type="text" id="newStudentCourse" required placeholder="e.g. B.Tech CSE" class="form-input">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Year / Semester</label>
+              <input type="text" id="newStudentYear" required placeholder="e.g. 2nd Year" class="form-input">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#94A3B8;">Guardian Contact</label>
+              <input type="text" id="newStudentGuardian" required placeholder="+91 98111 00000" class="form-input">
+            </div>
+          </div>
+          <div class="flex gap-3 pt-1">
+            <button type="button" onclick="closeModal('createStudentModal')" class="btn-ghost flex-1">Cancel</button>
+            <button type="submit" class="btn-primary flex-1">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              Save Student
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NOTIFICATIONS DRAWER ───────────────────────────────────────────── -->
+  <div id="notificationsDrawer" class="hidden fixed inset-y-0 right-0 z-50 w-full sm:w-96 flex flex-col" style="background:rgba(8,12,24,0.98);backdrop-filter:blur(20px);border-left:1.5px solid var(--border);box-shadow:-10px 0 40px rgba(0,0,0,0.5);">
+    <div class="p-5 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
+      <h3 class="flex items-center gap-3 font-black text-white text-lg">
+        <span style="width:34px;height:34px;border-radius:9px;" class="grad-primary flex items-center justify-center">
+          <i data-lucide="bell" class="w-4 h-4 text-white"></i>
+        </span>
+        Alerts Center
+      </h3>
+      <button onclick="toggleNotificationsDrawer()" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="notificationsList" class="flex-1 overflow-y-auto p-4 flex flex-col gap-0"></div>
+  </div>
+
+  <!-- ── APP JS ─────────────────────────────────────────────────────────── -->
+  <script src="/static/app.js?v=8"></script>
 </body>
 </html>
