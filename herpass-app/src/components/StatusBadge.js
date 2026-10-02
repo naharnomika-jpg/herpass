@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { STATUS_COLORS, STATUS_ICONS } from '../theme';
 
@@ -8,10 +7,10 @@ export default function StatusBadge({ status, size = 'sm' }) {
   const cfg = STATUS_COLORS[status] || { bg: '#0F1629', text: '#94A3B8', border: '#1E2D50' };
   const iconName = STATUS_ICONS[status];
   const isLg = size === 'lg';
-  const fontSize = isLg ? 12 : 10;
-  const px = isLg ? 10 : 7;
-  const py = isLg ? 5 : 3;
-  const iconSize = isLg ? 13 : 10;
+  const fontSize = isLg ? 13 : 11;
+  const px = isLg ? 12 : 8;
+  const py = isLg ? 6 : 4;
+  const iconSize = isLg ? 14 : 11;
 
   return (
     <View
@@ -22,7 +21,7 @@ export default function StatusBadge({ status, size = 'sm' }) {
           borderColor: cfg.border,
           paddingHorizontal: px,
           paddingVertical: py,
-          gap: isLg ? 5 : 3,
+          gap: isLg ? 5 : 4,
         },
       ]}
     >
@@ -38,7 +37,7 @@ export default function StatusBadge({ status, size = 'sm' }) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 8,
+    borderRadius: 9,
     borderWidth: 1,
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -46,6 +45,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
 });

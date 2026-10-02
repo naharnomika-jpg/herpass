@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { getNotifications } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { colors, gradients, radius } from '../theme';
+import { colors, gradients, radius, spacing, typography, TAB_BAR_HEIGHT } from '../theme';
 import { POLL_INTERVAL } from '../config';
 
 const PRIORITY_CONFIG = {
@@ -47,7 +47,7 @@ function NotifCard({ notif }) {
       <View style={styles.notifBody}>
         <View style={styles.notifTop}>
           <View style={[styles.notifIconWrap, { backgroundColor: cfg.iconBg }]}>
-            <Ionicons name={cfg.icon} size={16} color={cfg.iconColor} />
+            <Ionicons name={cfg.icon} size={18} color={cfg.iconColor} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.notifType, { color: cfg.iconColor }]}>{notif.type}</Text>
@@ -96,9 +96,9 @@ export default function NotificationsScreen() {
     return (
       <View style={styles.center}>
         <LinearGradient colors={gradients.primary} style={styles.loadingIcon}>
-          <Ionicons name="notifications" size={22} color="#fff" />
+          <Ionicons name="notifications" size={26} color="#fff" />
         </LinearGradient>
-        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 12 }} />
+        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 16 }} />
       </View>
     );
   }
@@ -117,14 +117,14 @@ export default function NotificationsScreen() {
             <View style={styles.headerRow}>
               <View style={styles.pageTitleRow}>
                 <LinearGradient colors={gradients.primary} style={styles.titleIcon}>
-                  <Ionicons name="notifications" size={14} color="#fff" />
+                  <Ionicons name="notifications" size={16} color="#fff" />
                 </LinearGradient>
-                <Text style={styles.title}>Notifications</Text>
+                <Text style={styles.title}>Alerts</Text>
               </View>
               <View style={styles.badgeRow}>
                 {criticalCount > 0 && (
                   <View style={styles.criticalBadge}>
-                    <Ionicons name="warning" size={11} color="#fff" />
+                    <Ionicons name="warning" size={12} color="#fff" />
                     <Text style={styles.criticalBadgeText}>{criticalCount} critical</Text>
                   </View>
                 )}
@@ -137,12 +137,14 @@ export default function NotificationsScreen() {
             {/* Critical Alert Banner */}
             {criticalCount > 0 && (
               <LinearGradient
-                colors={['rgba(244,63,94,0.12)', 'rgba(244,63,94,0.05)']}
+                colors={['rgba(244,63,94,0.14)', 'rgba(244,63,94,0.06)']}
                 style={styles.criticalBanner}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Ionicons name="warning" size={18} color={colors.rose} />
+                <View style={styles.criticalIconWrap}>
+                  <Ionicons name="warning" size={20} color={colors.rose} />
+                </View>
                 <Text style={styles.criticalBannerText}>
                   {criticalCount} critical alert{criticalCount > 1 ? 's' : ''} require immediate attention
                 </Text>
@@ -154,7 +156,7 @@ export default function NotificationsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <LinearGradient colors={['rgba(16,185,129,0.12)', 'transparent']} style={styles.emptyIcon}>
-              <Ionicons name="checkmark-circle" size={32} color={colors.emerald} />
+              <Ionicons name="checkmark-circle" size={36} color={colors.emerald} />
             </LinearGradient>
             <Text style={styles.emptyTitle}>All Clear!</Text>
             <Text style={styles.emptyText}>No notifications at this time.</Text>
@@ -168,62 +170,67 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  loadingIcon: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  listContent: { padding: 16, paddingBottom: 100 },
+  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  loadingIcon: { width: 60, height: 60, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  listContent: { padding: spacing.base, paddingBottom: TAB_BAR_HEIGHT + 16 },
 
   // Header
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  pageTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  titleIcon: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  title: { color: colors.white, fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+  pageTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  titleIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  title: { color: colors.white, fontSize: typography.xxl, fontWeight: '900', letterSpacing: -0.5 },
   badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   criticalBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.rose, borderRadius: 20,
-    paddingHorizontal: 8, paddingVertical: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
   },
-  criticalBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  criticalBadgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   totalBadge: {
     backgroundColor: colors.primaryGlow, borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 4,
+    paddingHorizontal: 12, paddingVertical: 5,
     borderWidth: 1, borderColor: colors.primary + '40',
   },
-  totalBadgeText: { color: colors.primary, fontSize: 12, fontWeight: '800' },
+  totalBadgeText: { color: colors.primary, fontSize: 13, fontWeight: '800' },
 
   // Critical banner
   criticalBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderRadius: radius.md, padding: 12, marginBottom: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: radius.md, padding: 14, marginBottom: spacing.md,
     borderWidth: 1, borderColor: colors.rose + '40',
   },
-  criticalBannerText: { color: colors.rose, fontSize: 13, fontWeight: '700', flex: 1 },
+  criticalIconWrap: {
+    width: 38, height: 38, borderRadius: 10,
+    backgroundColor: 'rgba(244,63,94,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  criticalBannerText: { color: colors.rose, fontSize: 14, fontWeight: '700', flex: 1 },
 
   // Notification Card
   notifCard: {
     borderRadius: radius.md, borderWidth: 1.5,
-    marginBottom: 10, flexDirection: 'row', overflow: 'hidden',
+    marginBottom: 12, flexDirection: 'row', overflow: 'hidden',
   },
-  notifAccentBar: { width: 4 },
-  notifBody: { flex: 1, padding: 14, gap: 10 },
-  notifTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  notifAccentBar: { width: 5 },
+  notifBody: { flex: 1, padding: 16, gap: 12 },
+  notifTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   notifIconWrap: {
-    width: 34, height: 34, borderRadius: 10,
+    width: 38, height: 38, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
   },
-  notifType: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-  notifTime: { color: colors.dim, fontSize: 10, marginTop: 2 },
+  notifType: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  notifTime: { color: colors.dim, fontSize: 11, marginTop: 3 },
   priorityBadge: {
-    paddingHorizontal: 7, paddingVertical: 3,
-    borderRadius: 6, borderWidth: 1,
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 7, borderWidth: 1,
     alignSelf: 'flex-start',
   },
-  priorityText: { fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-  notifMessage: { color: colors.textPrimary, fontSize: 13, lineHeight: 20 },
+  priorityText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  notifMessage: { color: colors.textPrimary, fontSize: 14, lineHeight: 22 },
 
   // Empty
-  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 10 },
-  emptyIcon: { width: 72, height: 72, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  emptyTitle: { color: colors.white, fontSize: 18, fontWeight: '800' },
-  emptyText: { color: colors.muted, fontSize: 13 },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 64, gap: 12 },
+  emptyIcon: { width: 80, height: 80, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { color: colors.white, fontSize: 19, fontWeight: '800' },
+  emptyText: { color: colors.muted, fontSize: 14 },
 });

@@ -3,11 +3,11 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, ActivityIndicator, StatusBar, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StatusBar, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { colors, gradients } from './src/theme';
+import { colors, gradients, TAB_BAR_HEIGHT, SAFE_BOTTOM } from './src/theme';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -38,13 +38,13 @@ const navTheme = {
 };
 
 const TAB_ICONS = {
-  Dashboard: { focused: 'grid', unfocused: 'grid-outline' },
-  'Gate Desk': { focused: 'shield-checkmark', unfocused: 'shield-checkmark-outline' },
-  Students: { focused: 'people', unfocused: 'people-outline' },
-  Alerts: { focused: 'notifications', unfocused: 'notifications-outline' },
+  Dashboard:  { focused: 'grid',              unfocused: 'grid-outline' },
+  'Gate Desk':{ focused: 'shield-checkmark',  unfocused: 'shield-checkmark-outline' },
+  Students:   { focused: 'people',            unfocused: 'people-outline' },
+  Alerts:     { focused: 'notifications',     unfocused: 'notifications-outline' },
 };
 
-function TabIcon({ routeName, focused, color, size }) {
+function TabIcon({ routeName, focused, color }) {
   const icons = TAB_ICONS[routeName] || { focused: 'ellipse', unfocused: 'ellipse-outline' };
   const iconName = focused ? icons.focused : icons.unfocused;
   return (
@@ -57,7 +57,7 @@ function TabIcon({ routeName, focused, color, size }) {
           end={{ x: 1, y: 1 }}
         />
       )}
-      <Ionicons name={iconName} size={focused ? 20 : 22} color={focused ? '#fff' : color} />
+      <Ionicons name={iconName} size={focused ? 22 : 23} color={focused ? '#fff' : color} />
     </View>
   );
 }
@@ -74,20 +74,26 @@ function MainTabs() {
           backgroundColor: colors.bgCard,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 70,
-          paddingBottom: 10,
-          paddingTop: 8,
+          height: TAB_BAR_HEIGHT,
+          paddingBottom: SAFE_BOTTOM,
+          paddingTop: 10,
+          // Subtle top glow
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.12,
+          shadowRadius: 10,
+          elevation: 16,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.dim,
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: '700',
-          letterSpacing: 0.3,
-          marginTop: 2,
+          letterSpacing: 0.2,
+          marginTop: 3,
         },
-        tabBarIcon: ({ focused, color, size }) => (
-          <TabIcon routeName={route.name} focused={focused} color={color} size={size} />
+        tabBarIcon: ({ focused, color }) => (
+          <TabIcon routeName={route.name} focused={focused} color={color} />
         ),
       })}
     >
@@ -105,12 +111,12 @@ function AppNavigator() {
   if (loading) {
     return (
       <LinearGradient colors={gradients.hero} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ alignItems: 'center', gap: 16 }}>
+        <View style={{ alignItems: 'center', gap: 18 }}>
           <LinearGradient colors={gradients.primary} style={loadStyles.logoBox}>
-            <Ionicons name="shield-checkmark" size={28} color="#fff" />
+            <Ionicons name="shield-checkmark" size={32} color="#fff" />
           </LinearGradient>
           <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={{ color: colors.muted, fontSize: 13 }}>Loading Herpass...</Text>
+          <Text style={{ color: colors.muted, fontSize: 14 }}>Loading Herpass...</Text>
         </View>
       </LinearGradient>
     );
@@ -121,7 +127,7 @@ function AppNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.bgCard },
         headerTintColor: colors.white,
-        headerTitleStyle: { fontWeight: '800', fontSize: 16, letterSpacing: 0.3 },
+        headerTitleStyle: { fontWeight: '800', fontSize: 17, letterSpacing: 0.2 },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.bg },
       }}
@@ -166,7 +172,7 @@ function AppNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.bg} translucent={false} />
       <NavigationContainer theme={navTheme}>
         <AppNavigator />
       </NavigationContainer>
@@ -176,29 +182,29 @@ export default function App() {
 
 const tabStyles = StyleSheet.create({
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   iconWrapActive: {
-    borderRadius: 10,
+    borderRadius: 12,
   },
 });
 
 const loadStyles = StyleSheet.create({
   logoBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
+    width: 72,
+    height: 72,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 14,
+    shadowRadius: 20,
+    elevation: 16,
   },
 });

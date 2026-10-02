@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { getDashboardStats, getOutings, markOut, markReturned } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { colors, gradients, radius } from '../theme';
+import { colors, gradients, radius, spacing, typography, TAB_BAR_HEIGHT } from '../theme';
 import { POLL_INTERVAL } from '../config';
 import StatCard from '../components/StatCard';
 import OutingCard from '../components/OutingCard';
@@ -86,9 +86,9 @@ export default function DashboardScreen({ navigation }) {
     return (
       <View style={styles.center}>
         <LinearGradient colors={gradients.primary} style={styles.loadingIcon}>
-          <Ionicons name="grid" size={22} color="#fff" />
+          <Ionicons name="grid" size={26} color="#fff" />
         </LinearGradient>
-        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 12 }} />
+        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 16 }} />
         <Text style={styles.loadingText}>Loading dashboard...</Text>
       </View>
     );
@@ -109,9 +109,9 @@ export default function DashboardScreen({ navigation }) {
               <View style={styles.pageHeaderLeft}>
                 <View style={styles.pageTitleRow}>
                   <LinearGradient colors={gradients.primary} style={styles.titleIcon}>
-                    <Ionicons name="grid" size={14} color="#fff" />
+                    <Ionicons name="grid" size={16} color="#fff" />
                   </LinearGradient>
-                  <Text style={styles.title}>Outing Overview</Text>
+                  <Text style={styles.title}>Overview</Text>
                 </View>
                 <View style={styles.liveRow}>
                   <View style={styles.liveDot} />
@@ -124,7 +124,7 @@ export default function DashboardScreen({ navigation }) {
                 activeOpacity={0.85}
               >
                 <LinearGradient colors={gradients.primary} style={styles.createBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  <Ionicons name="add" size={16} color="#fff" />
+                  <Ionicons name="add" size={18} color="#fff" />
                   <Text style={styles.createBtnText}>New Outing</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -138,18 +138,18 @@ export default function DashboardScreen({ navigation }) {
                 activeOpacity={0.85}
               >
                 <LinearGradient
-                  colors={['rgba(244,63,94,0.15)', 'rgba(244,63,94,0.08)']}
+                  colors={['rgba(244,63,94,0.18)', 'rgba(244,63,94,0.08)']}
                   style={styles.overdueBannerInner}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
                   <View style={styles.overdueIconWrap}>
-                    <Ionicons name="warning" size={18} color={colors.rose} />
+                    <Ionicons name="warning" size={20} color={colors.rose} />
                   </View>
                   <Text style={styles.overdueText}>
                     {stats.overdue_count} OVERDUE student{stats.overdue_count > 1 ? 's' : ''} — tap to review
                   </Text>
-                  <Ionicons name="chevron-forward" size={14} color={colors.rose} />
+                  <Ionicons name="chevron-forward" size={16} color={colors.rose} />
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -165,7 +165,7 @@ export default function DashboardScreen({ navigation }) {
 
             {/* Search */}
             <View style={styles.searchWrap}>
-              <Ionicons name="search" size={15} color={colors.dim} style={{ marginRight: 8 }} />
+              <Ionicons name="search" size={17} color={colors.dim} style={{ marginRight: 6 }} />
               <TextInput
                 style={styles.searchInput}
                 value={search}
@@ -174,8 +174,8 @@ export default function DashboardScreen({ navigation }) {
                 placeholderTextColor={colors.dim}
               />
               {search.length > 0 && (
-                <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
-                  <Ionicons name="close-circle" size={16} color={colors.dim} />
+                <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Ionicons name="close-circle" size={18} color={colors.dim} />
                 </TouchableOpacity>
               )}
             </View>
@@ -206,9 +206,7 @@ export default function DashboardScreen({ navigation }) {
             </View>
 
             <View style={styles.sectionLabelRow}>
-              <Text style={styles.sectionLabel}>
-                Live Register
-              </Text>
+              <Text style={styles.sectionLabel}>Live Register</Text>
               <View style={styles.countBadge}>
                 <Text style={styles.countBadgeText}>{filtered.length}</Text>
               </View>
@@ -227,7 +225,7 @@ export default function DashboardScreen({ navigation }) {
         ListEmptyComponent={
           <View style={styles.empty}>
             <LinearGradient colors={['rgba(99,102,241,0.12)', 'transparent']} style={styles.emptyIcon}>
-              <Ionicons name="calendar-outline" size={28} color={colors.primary} />
+              <Ionicons name="calendar-outline" size={32} color={colors.primary} />
             </LinearGradient>
             <Text style={styles.emptyTitle}>No records found</Text>
             <Text style={styles.emptyText}>No outings match your current filter.</Text>
@@ -241,72 +239,72 @@ export default function DashboardScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  loadingIcon: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { color: colors.muted, fontSize: 13 },
-  listContent: { padding: 16, paddingBottom: 100 },
+  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  loadingIcon: { width: 60, height: 60, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { color: colors.muted, fontSize: typography.sm },
+  listContent: { padding: spacing.base, paddingBottom: TAB_BAR_HEIGHT + 16 },
 
   // Page Header
-  pageHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  pageHeaderLeft: { gap: 4 },
-  pageTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  titleIcon: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  title: { color: colors.white, fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
-  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 34 },
-  liveDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.emerald },
-  liveTxt: { color: colors.muted, fontSize: 11 },
+  pageHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.base },
+  pageHeaderLeft: { gap: 5 },
+  pageTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  titleIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  title: { color: colors.white, fontSize: typography.xxl, fontWeight: '900', letterSpacing: -0.5 },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 38 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.emerald },
+  liveTxt: { color: colors.muted, fontSize: 12 },
   createBtnWrap: { borderRadius: radius.md, overflow: 'hidden' },
-  createBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 10 },
-  createBtnText: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  createBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 12 },
+  createBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
 
   // Overdue banner
   overdueBanner: { borderRadius: radius.md, overflow: 'hidden', marginBottom: 14, borderWidth: 1, borderColor: colors.rose + '44' },
-  overdueBannerInner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
+  overdueBannerInner: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   overdueIconWrap: {
-    width: 32, height: 32, borderRadius: 8,
+    width: 36, height: 36, borderRadius: 10,
     backgroundColor: 'rgba(244,63,94,0.15)',
     alignItems: 'center', justifyContent: 'center',
   },
-  overdueText: { color: colors.rose, fontSize: 13, fontWeight: '700', flex: 1 },
+  overdueText: { color: colors.rose, fontSize: 14, fontWeight: '700', flex: 1 },
 
   // Stats
-  statsRow: { flexDirection: 'row', marginBottom: 14 },
+  statsRow: { flexDirection: 'row', marginBottom: spacing.md },
 
   // Search
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: colors.bgCard, borderRadius: radius.md,
     borderWidth: 1.5, borderColor: colors.border,
-    paddingHorizontal: 14, height: 46, marginBottom: 12,
+    paddingHorizontal: 14, height: 50, marginBottom: 12,
   },
-  searchInput: { flex: 1, color: colors.white, fontSize: 13 },
+  searchInput: { flex: 1, color: colors.white, fontSize: 14 },
   clearBtn: { padding: 4 },
 
   // Filters
-  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.base },
   filterBtn: {
     borderRadius: radius.sm,
     backgroundColor: colors.bgCard, borderWidth: 1.5, borderColor: colors.border,
     overflow: 'hidden',
   },
   filterBtnActive: { borderColor: 'transparent' },
-  filterBtnGrad: { paddingHorizontal: 12, paddingVertical: 6 },
-  filterBtnText: { color: colors.muted, fontSize: 11, fontWeight: '700', paddingHorizontal: 12, paddingVertical: 6 },
-  filterBtnTextActive: { color: '#fff', fontSize: 11, fontWeight: '800' },
+  filterBtnGrad: { paddingHorizontal: 14, paddingVertical: 8 },
+  filterBtnText: { color: colors.muted, fontSize: 12, fontWeight: '700', paddingHorizontal: 14, paddingVertical: 8 },
+  filterBtnTextActive: { color: '#fff', fontSize: 12, fontWeight: '800' },
 
   // Section label
-  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  sectionLabel: { color: colors.dim, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sectionLabel: { color: colors.dim, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
   countBadge: {
     backgroundColor: colors.primaryGlow, borderRadius: 10,
-    paddingHorizontal: 8, paddingVertical: 2,
+    paddingHorizontal: 9, paddingVertical: 3,
     borderWidth: 1, borderColor: colors.primary + '30',
   },
-  countBadgeText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
+  countBadgeText: { color: colors.primary, fontSize: 11, fontWeight: '800' },
 
   // Empty
-  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 10 },
-  emptyIcon: { width: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  emptyTitle: { color: colors.white, fontSize: 16, fontWeight: '700' },
-  emptyText: { color: colors.muted, fontSize: 13 },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: 56, gap: 12 },
+  emptyIcon: { width: 72, height: 72, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { color: colors.white, fontSize: 17, fontWeight: '700' },
+  emptyText: { color: colors.muted, fontSize: 14 },
 });
